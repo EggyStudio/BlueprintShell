@@ -86,7 +86,6 @@ BenchmarkDotNet.Artifacts/
 project.lock.json
 project.fragment.lock.json
 artifacts/
-.artifacts/
 
 # ASP.NET Scaffolding
 ScaffoldingReadMe.txt
@@ -427,3 +426,46 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# ------------------------------------------------------
+# JetBrains Rider / IntelliJ IDEA
+# ------------------------------------------------------
+# Ignore entire project .idea directory (Rider stores per-solution config here)
+.idea/
+# Legacy IntelliJ-based project files
+*.iml
+*.iws
+*.ipr
+# Rider sometimes generates per-solution module files
+*.sln.iml
+# Optional: JetBrains run configurations outside .idea
+.run/
+
+# JetBrains Fleet (if used)
+.fleet/
+
+# VS Code (if someone opens this workspace there)
+.vscode/
+
+# OS-specific junk
+.DS_Store
+Thumbs.db
+
+# Editor swap/backup files
+*.swp
+*.swo
+*.orig
+
+# .NET local development overrides (keep shared appsettings in repo)
+appsettings.*.local.json
+appsettings.Local.json
+appsettings.Development.local.json
+
+# CI/CD workflows to ignore
+.github/workflows/publish-nuget.yml
+
+# Dear ImGui layout file (generated at runtime)
+**/imgui.ini
+
+# Claude files
+.claude

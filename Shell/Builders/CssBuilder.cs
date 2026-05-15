@@ -1,4 +1,4 @@
-namespace Editor.Shell;
+namespace BlueprintShell.Shell;
 
 
 // -- Enums --

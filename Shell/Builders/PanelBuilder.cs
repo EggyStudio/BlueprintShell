@@ -1,4 +1,4 @@
-namespace Editor.Shell;
+namespace BlueprintShell.Shell;
 
 /// <summary>
 /// Entry point for editor shell scripts. Classes marked with <see cref="EditorShellAttribute"/>

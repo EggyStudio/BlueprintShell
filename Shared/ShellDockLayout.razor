@@ -1,4 +1,4 @@
-@using Editor.Shell
+@using BlueprintShell.Shell
 
 @{
     var topPanels = Panels.Where(p => p.Visible && p.DefaultZone == DockZone.Top).OrderBy(p => p.TabOrder).ToList();

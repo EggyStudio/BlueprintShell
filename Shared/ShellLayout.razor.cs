@@ -1,41 +1,45 @@
-using Editor.Shell;
+using BlueprintShell.Shell;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 
-namespace Editor.Server.Shared;
+namespace BlueprintShell.Shared;
 
 /// <summary>
-/// Blazor layout component that reads the current <see cref="ShellDescriptor"/> from the
-/// <see cref="ShellRegistry"/> and re-renders whenever the descriptor changes (hot-reload).
+/// Layout component that drives the shell chrome (header, nav, dark-mode).
+/// Subscribes to <see cref="ShellRegistry.Changed"/> and re-renders whenever the
+/// descriptor is hot-reloaded.
 /// </summary>
-/// <remarks>
-/// Subscribes to <see cref="ShellRegistry.Changed"/> on initialization and
-/// calls <see cref="ComponentBase.StateHasChanged"/> via <see cref="ComponentBase.InvokeAsync(Action)"/>
-/// to safely trigger a Blazor re-render from the compiler's background thread.
-/// </remarks>
-/// <seealso cref="ShellRegistry"/>
-/// <seealso cref="ShellDescriptor"/>
 public partial class ShellLayout : LayoutComponentBase, IDisposable
 {
     [Inject] private ShellRegistry Registry { get; set; } = null!;
+    [Inject] private BlueprintShellOptions Options { get; set; } = null!;
+    [Inject] private IJSRuntime JS { get; set; } = null!;
 
-    /// <summary>Gets the current shell descriptor from the registry.</summary>
     private ShellDescriptor Descriptor => Registry.Current;
+    private bool _isDark = true; // default: dark mode on
 
-    /// <summary>Subscribes to shell change notifications on initialization.</summary>
     protected override void OnInitialized()
     {
         Registry.Changed += OnShellChanged;
     }
 
-    /// <summary>Handles shell changes by triggering a Blazor re-render on the synchronization context.</summary>
-    private void OnShellChanged()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        InvokeAsync(StateHasChanged);
+        if (firstRender)
+        {
+            try { _isDark = await JS.InvokeAsync<bool>("isDarkModeEnabled"); }
+            catch { /* JS interop not yet ready — leave default */ }
+            StateHasChanged();
+        }
     }
 
-    /// <summary>Unsubscribes from shell change notifications.</summary>
-    public void Dispose()
+    private async Task ToggleDarkMode()
     {
-        Registry.Changed -= OnShellChanged;
+        await JS.InvokeVoidAsync("toggleDarkMode");
+        _isDark = !_isDark;
     }
+
+    private void OnShellChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Registry.Changed -= OnShellChanged;
 }

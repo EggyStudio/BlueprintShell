@@ -1,4 +1,4 @@
-namespace Editor.Shell;
+namespace BlueprintShell.Shell;
 
 /// <summary>
 /// Marks a static method that registers compiled-in editor shells with a

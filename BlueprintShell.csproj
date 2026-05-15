@@ -1,18 +1,31 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Razor">
 
     <PropertyGroup>
         <TargetFramework>net9.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-        <SelfContained>true</SelfContained>
-        <RootNamespace>Editor.Server</RootNamespace>
+        <RootNamespace>BlueprintShell</RootNamespace>
+
+        <!-- NuGet packaging -->
+        <IsPackable>true</IsPackable>
+        <PackageId>BlueprintShell</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>EggyStudio</Authors>
+        <Description>Embeddable editor shell built on BlazorBlueprint. Spin up a themed, dockable editor UI on a configurable port from any .NET application.</Description>
+        <PackageTags>blazor;blueprintshell;editor;shell;blazorblueprint</PackageTags>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     </PropertyGroup>
+
+    <ItemGroup>
+        <!-- ASP.NET Core — consumed from the hosting runtime, not bundled into the library -->
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="BlazorBlueprint.Components" Version="3.10.0" />
         <PackageReference Include="BlazorBlueprint.Icons.Feather" Version="2.0.0" />
         <PackageReference Include="BlazorBlueprint.Icons.Heroicons" Version="2.0.0" />
-        <PackageReference Include="BlazorBlueprint.Icons.Lucide" Version="2.*"/>
+        <PackageReference Include="BlazorBlueprint.Icons.Lucide" Version="2.*" />
         <PackageReference Include="BlazorBlueprint.Primitives" Version="3.10.0" />
     </ItemGroup>
 

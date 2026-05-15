@@ -1,4 +1,4 @@
-namespace Editor.Shell;
+namespace BlueprintShell.Shell;
 
 /// <summary>
 /// Strongly-typed icon resolver. Converts icon-set enums to their kebab-case string names

@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace Editor.Shell;
+namespace BlueprintShell.Shell;
 
 /// <summary>
 /// Discovers compile-time-registered editor shells by reflecting across every loaded assembly

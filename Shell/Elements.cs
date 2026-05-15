@@ -1,4 +1,4 @@
-namespace Editor.Shell;
+namespace BlueprintShell.Shell;
 
 /// <summary>
 /// A single UI element in the content tree. Tag determines the component type,

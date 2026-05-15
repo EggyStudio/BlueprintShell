@@ -1,4 +1,4 @@
-namespace Editor.Shell;
+namespace BlueprintShell.Shell;
 
 /// <summary>Builder for configuring a panel's content and behavior.</summary>
 public interface IPanelBuilder

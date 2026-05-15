@@ -1,4 +1,4 @@
-namespace Editor.Shell;
+namespace BlueprintShell.Shell;
 
 /// <summary>
 /// Central registry holding the merged <see cref="ShellDescriptor"/> assembled from

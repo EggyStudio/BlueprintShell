@@ -1,6 +1,6 @@
 // Auto-generated icon enums - do not edit by hand.
 // Re-generate by running the icon extraction tool.
-namespace Editor.Shell;
+namespace BlueprintShell.Shell;
 
 /// <summary>Lucide icon set. Use with <see cref="Icon.From(Lucide)"/> to resolve icon names.</summary>
 /// <seealso cref="Icon"/>

@@ -1,4 +1,4 @@
-namespace Editor.Shell;
+namespace BlueprintShell.Shell;
 
 /// <summary>
 /// A single contribution of editor shell content to the <see cref="ShellRegistry"/>,

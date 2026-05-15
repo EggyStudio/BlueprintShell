@@ -1,7 +1,7 @@
-using Editor.Shell;
+using BlueprintShell.Shell;
 using Microsoft.AspNetCore.SignalR;
 
-namespace Editor.Server.Hubs;
+namespace BlueprintShell.Hubs;
 
 // -- SignalR Contracts --
 

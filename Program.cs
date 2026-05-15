@@ -62,7 +62,7 @@ public static class EditorServerHost
 
         builder.Services.AddSingleton(options);
         builder.Services.AddSingleton(shellRegistry);
-        builder.Services.AddSingleton<EditorState>();
+        builder.Services.AddSingleton<ShellState>();
 
         builder.Services
             .AddRazorComponents()
@@ -83,7 +83,7 @@ public static class EditorServerHost
         app.MapStaticAssets();
         app.MapRazorComponents<App>()
             .AddInteractiveServerRenderMode();
-        app.MapHub<EditorHub>("/editor-hub");
+        app.MapHub<ShellHub>("/shell-hub");
 
         await app.StartAsync();
         return app;

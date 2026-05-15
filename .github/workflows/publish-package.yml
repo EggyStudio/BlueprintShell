@@ -1,0 +1,77 @@
+name: publish-package
+# Packs BlueprintShell into a NuGet package and publishes it to GitHub Packages
+# (https://github.com/EggyStudio/BlueprintShell/packages).
+#
+# Versioning:
+#   The csproj <Version> encodes "major.minor"; the patch component is replaced
+#   with ${{ github.run_number }} so every run yields a strictly increasing
+#   version like 0.1.<run_number> without committing back to the repo.
+#
+# Triggers:
+#   push  - fires on main whenever package-shaping files change.
+#   workflow_dispatch - lets you publish on demand without a code push.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "BlueprintShell.csproj"
+      - "README.md"
+      - ".github/assets/**"
+      - ".github/workflows/publish-package.yml"
+      - "**/*.cs"
+      - "**/*.razor"
+      - "wwwroot/**"
+  workflow_dispatch:
+
+# GitHub Packages requires packages:write; contents:read is enough for checkout.
+permissions:
+  contents: read
+  packages: write
+
+env:
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      # Read "major.minor" from the csproj <Version> and append the run number
+      # as the patch so every CI run produces a unique, monotonically increasing
+      # version without touching any tracked file.
+      - name: Compute package version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="$(grep -oPm1 '(?<=<Version>)[^<]+' BlueprintShell.csproj)"
+          major_minor="$(echo "$base" | awk -F. '{ printf "%s.%s", $1, $2 }')"
+          version="${major_minor}.${{ github.run_number }}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Publishing BlueprintShell $version"
+
+      # restore + build + pack in one shot; -p:Version overrides the csproj value.
+      - name: Pack
+        run: dotnet pack -c Release -p:Version=${{ steps.version.outputs.version }}
+
+      - name: Upload nupkg artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BlueprintShell-${{ steps.version.outputs.version }}
+          path: bin/Release/*.nupkg
+
+      # --skip-duplicate makes re-runs idempotent if the same version was already pushed.
+      - name: Push to GitHub Packages
+        run: |
+          dotnet nuget push "bin/Release/*.nupkg" \
+            --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+            --api-key "${{ secrets.GITHUB_TOKEN }}" \
+            --skip-duplicate

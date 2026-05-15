@@ -28,7 +28,7 @@ public partial class ShellLayout : LayoutComponentBase, IDisposable
         if (firstRender)
         {
             try { _isDark = await JS.InvokeAsync<bool>("isDarkModeEnabled"); }
-            catch { /* JS interop not yet ready — leave default */ }
+            catch { /* JS interop not yet ready - leave default */ }
             StateHasChanged();
         }
     }

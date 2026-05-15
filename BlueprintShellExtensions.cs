@@ -26,7 +26,7 @@ public static class BlueprintShellExtensions
 {
     /// <summary>
     /// Registers all BlueprintShell services: <see cref="BlueprintShellOptions"/>,
-    /// <see cref="ShellRegistry"/>, <see cref="EditorState"/>, BlazorBlueprint, and SignalR.
+    /// <see cref="ShellRegistry"/>, <see cref="ShellState"/>, BlazorBlueprint, and SignalR.
     /// </summary>
     /// <param name="services">The host's service collection.</param>
     /// <param name="configure">Optional delegate to customise <see cref="BlueprintShellOptions"/>.</param>
@@ -39,7 +39,7 @@ public static class BlueprintShellExtensions
 
         services.AddSingleton(options);
         services.AddSingleton<ShellRegistry>();
-        services.AddSingleton<EditorState>();
+        services.AddSingleton<ShellState>();
         services.AddBlazorBlueprintComponents();
         services.AddSignalR();
 
@@ -47,12 +47,12 @@ public static class BlueprintShellExtensions
     }
 
     /// <summary>
-    /// Maps the BlueprintShell SignalR hub at <c>/editor-hub</c>.
+    /// Maps the BlueprintShell SignalR hub at <c>/shell-hub</c>.
     /// Call this on the <see cref="WebApplication"/> after <c>Build()</c>.
     /// </summary>
     public static WebApplication MapBlueprintShell(this WebApplication app)
     {
-        app.MapHub<EditorHub>("/editor-hub");
+        app.MapHub<ShellHub>("/shell-hub");
         return app;
     }
 }

@@ -1,23 +1,47 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
 
     <PropertyGroup>
-        <TargetFramework>net9.0</TargetFramework>
-        <Nullable>enable</Nullable>
+        <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>annotations</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <RootNamespace>BlueprintShell</RootNamespace>
-
-        <!-- NuGet packaging -->
-        <IsPackable>true</IsPackable>
-        <PackageId>BlueprintShell</PackageId>
-        <Version>1.0.0</Version>
-        <Authors>EggyStudio</Authors>
-        <Description>Embeddable editor shell built on BlazorBlueprint. Spin up a themed, dockable editor UI on a configurable port from any .NET application.</Description>
-        <PackageTags>blazor;blueprintshell;editor;shell;blazorblueprint</PackageTags>
-        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <AssemblyName>BlueprintShell</AssemblyName>
     </PropertyGroup>
 
+    <!-- NuGet package metadata -->
+    <PropertyGroup>
+        <IsPackable>true</IsPackable>
+        <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+        <PackageId>BlueprintShell</PackageId>
+        <Version>0.1.0</Version>
+        <Description>Embeddable editor shell built on BlazorBlueprint. Spin up a themed, dockable editor UI on a configurable port from any .NET application.</Description>
+        <Authors>EggyStudio</Authors>
+        <RepositoryType>git</RepositoryType>
+        <RepositoryUrl>https://github.com/EggyStudio/BlueprintShell</RepositoryUrl>
+        <PackageProjectUrl>https://github.com/EggyStudio/BlueprintShell</PackageProjectUrl>
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <PackageTags>blazor;blueprintshell;editor;shell;blazorblueprint</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageIcon>logo.png</PackageIcon>
+        <Deterministic>true</Deterministic>
+    </PropertyGroup>
+
+    <!-- Branding / docs -->
     <ItemGroup>
-        <!-- ASP.NET Core — consumed from the hosting runtime, not bundled into the library -->
+        <None Include="README.md" Pack="true" PackagePath="/"/>
+        <None Include=".github/assets/*" Pack="true" PackagePath="/" Visible="true"/>
+    </ItemGroup>
+
+    <!-- Surface GitHub Actions workflows in the IDE solution view. 
+         Not packed, not copied to output. -->
+    <ItemGroup>
+        <None Include=".github/workflows/*.yml" Pack="false" Visible="true"/>
+        <None Include=".github/workflows/*.yaml" Pack="false" Visible="true"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- ASP.NET Core - consumed from the hosting runtime, not bundled into the library -->
         <FrameworkReference Include="Microsoft.AspNetCore.App" />
     </ItemGroup>
 

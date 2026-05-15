@@ -11,8 +11,8 @@ public sealed class BlueprintShellOptions
     /// Kestrel listen URL.  Supports any format accepted by <c>UseUrls</c>, e.g.:
     /// <list type="bullet">
     ///   <item><c>"http://localhost:5000"</c> (default)</item>
-    ///   <item><c>"http://*:5100"</c> — all interfaces on port 5100</item>
-    ///   <item><c>"https://localhost:5001;http://localhost:5000"</c> — dual binding</item>
+    ///   <item><c>"http://*:5100"</c> - all interfaces on port 5100</item>
+    ///   <item><c>"https://localhost:5001;http://localhost:5000"</c> - dual binding</item>
     /// </list>
     /// Only used by <see cref="EditorServerHost.StartAsync"/>; ignored in embedded mode.
     /// </summary>

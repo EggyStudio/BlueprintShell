@@ -7,7 +7,7 @@
     var isRoot    = string.IsNullOrEmpty(Slug);
     var allPanels = Registry.Current.Panels.Where(p => p.Visible).ToList();
     var pageTitle = panel?.Title is { Length: > 0 } t
-        ? $"{t} — {Options.AppTitle}"
+        ? $"{t} - {Options.AppTitle}"
         : Options.AppTitle;
 }
 
@@ -23,7 +23,7 @@ else if (panel?.Content is { Count: > 0 })
 }
 else if (isRoot && allPanels.Count > 0)
 {
-    @* Root "/" with no explicit route panel — render the full dock layout *@
+    @* Root "/" with no explicit route panel - render the full dock layout *@
     <ShellDockLayout Panels="allPanels" />
 }
 else if (!isRoot)

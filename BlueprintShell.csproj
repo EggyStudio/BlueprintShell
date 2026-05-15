@@ -20,7 +20,7 @@
         <RepositoryType>git</RepositoryType>
         <RepositoryUrl>https://github.com/EggyStudio/BlueprintShell</RepositoryUrl>
         <PackageProjectUrl>https://github.com/EggyStudio/BlueprintShell</PackageProjectUrl>
-        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <PackageLicenseExpression>MPL-2.0</PackageLicenseExpression>
         <PackageTags>blazor;blueprintshell;editor;shell;blazorblueprint</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageIcon>logo.png</PackageIcon>

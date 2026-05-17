@@ -232,6 +232,7 @@ public sealed class ShellRegistry
                     Chrome = attr.Chrome,
                     RequiresRole = attr.RequiresRole,
                     Title = attr.Title,
+                    UseBlazorRouter = attr.UseBlazorRouter,
                 });
             }
 

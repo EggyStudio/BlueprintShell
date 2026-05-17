@@ -78,6 +78,7 @@ Then add the shell's `App`, `Routes`, and `ShellLayout` into your Razor routing 
 | `LaunchBrowser` | `bool` | `false` | Open the system browser pointing at `Url` once the server is ready. |
 | `ChromeMode` | `ShellChromeMode` | `Full` | Default chrome level: `Full` (dock + header), `Minimal` (header only), `Hidden` (nothing - just shell services around `@Body`). |
 | `ChromeFor` | `Func<HttpContext, ShellChromeMode>?` | `null` | Per-request override; evaluated before `ChromeMode`. |
+| `ChromeForServices` | `Func<HttpContext, IServiceProvider, ShellChromeMode>?` | `null` | DI-aware variant of `ChromeFor`; evaluated **first** when set. |
 | `MobileBreakpointPx` | `int` | `768` | Viewport width below which the dock collapses. |
 | `MobileBehavior` | `MobileBehavior` | `Stacked` | `Stacked`, `Drawer`, or `Hidden` below the mobile breakpoint. |
 | `StaticAssetsBasePath` | `string?` | `null` | Override the `/_content/BlueprintShell` prefix used by the shell's CSS imports. |
@@ -124,7 +125,7 @@ Decorate any Blazor component with `[EditorPanel]` to register it as a dockable 
 | `title` | Display name in the panel header / tab. |
 | `zone` | Default dock position: `Top`, `Left`, `Right`, `Bottom`, `Center`, `Float`. |
 | `Icon` | Optional Lucide icon name shown in the header. |
-| `Route` | When set, a nav-link to this panel appears in the shell header. |
+| `Route` | When set, a nav-link to this panel appears in the shell header **and** the catch-all router serves the panel at the given URL. Route parameters (e.g. `"/edit/article/{Identifier}"`) are forwarded to matching `[Parameter]` properties — same convention as `@page`. |
 | `TabGroup` | Groups this panel as a tab inside another panel. |
 | `TabOrder` | Sort order within a tab group. |
 | `InitialSize` | Fraction (0–1) of the parent dock area. Default `0.25`. |
@@ -210,6 +211,21 @@ content (articles, marketing pages) hosted alongside an editor.
 The shell resolves the route via a catch-all router and forwards segments as
 `[Parameter]` properties on the component (same convention as `@page`).
 
+### Incremental adoption (`UseBlazorRouter = true`)
+
+If you already have a catalog of `@page`-routed components and don't want to
+migrate them wholesale, set `UseBlazorRouter = true`. The shell records the
+entry in `ShellRegistry` (so it shows up in diagnostics and participates in
+role tracking) but the catch-all router skips it — your existing Blazor
+`Router` continues to handle the URL. `RequiresRole` becomes advisory in this
+mode: the shell can't gate a request it doesn't render, so enforce the role
+check inside the component or via your own routing middleware.
+
+```razor
+@page "/wiki/{Identifier}"
+@attribute [ReaderPage("article", "/wiki/{Identifier}", UseBlazorRouter = true)]
+```
+
 ## Auth-aware chrome
 
 Implement `IShellAuthContext` and the shell will filter `[EditorPanel(..., RequiresRole = "...")]`
@@ -272,6 +288,45 @@ app.MapBlueprintShellPwa(new BlueprintShellPwaOptions
 
 Serves a manifest at `/manifest.webmanifest` and a service worker at `/sw.js`,
 precaching the shell's own CSS and any URLs you add via `ExtraCacheUrls`.
+
+The generated service worker skips `/_blazor`, `/_framework`, and the
+configured SignalR hub path by default (caching them breaks Blazor Server
+reconnects after deploy). Add more prefixes via
+`BlueprintShellPwaOptions.ExcludePathPrefixes`.
+
+To register the service worker on the client, either drop the helper
+component into your layout / `App.razor`:
+
+```razor
+<BlueprintShellPwaBootstrap />
+```
+
+…or set `RenderRegistrationScript = false` and emit the
+`navigator.serviceWorker.register('/sw.js')` call yourself.
+
+## DI-aware chrome resolution
+
+`ChromeFor` runs without access to scoped services. When you need to resolve
+`IShellAuthContext` (or anything else from DI) to pick chrome, use
+`ChromeForServices` instead — it receives the scoped `IServiceProvider` and is
+evaluated before `ChromeFor`.
+
+```csharp
+o.ChromeForServices = (ctx, sp) =>
+{
+    var auth = sp.GetRequiredService<IShellAuthContext>();
+    return auth.IsAuthenticated ? ShellChromeMode.Full : ShellChromeMode.Hidden;
+};
+```
+
+## Dialogs / popovers (`BbPortalHost`)
+
+BlazorBlueprint renders dialogs, popovers, tooltips, and toasts into a portal
+host — your layout must include `<BbPortalHost />` (from
+`BlazorBlueprint.Primitives.Services`, **not** `BlazorBlueprint.Primitives`)
+for those primitives to appear. All three of the shell's built-in layouts
+(`ShellLayout`, `MinimalLayout`, `ReaderLayout`) already include it; consumers
+writing their own layout need to add it themselves.
 
 ## Diagnostics
 

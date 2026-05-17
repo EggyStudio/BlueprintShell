@@ -72,6 +72,13 @@ public sealed class BlueprintShellOptions
     public Func<HttpContext, ShellChromeMode>? ChromeFor { get; set; }
 
     /// <summary>
+    /// DI-aware variant of <see cref="ChromeFor"/>. Receives the scoped <see cref="IServiceProvider"/>
+    /// so the callback can resolve services such as <see cref="Shell.IShellAuthContext"/>.
+    /// When set, this is evaluated <em>before</em> <see cref="ChromeFor"/>.
+    /// </summary>
+    public Func<HttpContext, IServiceProvider, ShellChromeMode>? ChromeForServices { get; set; }
+
+    /// <summary>
     /// Viewport width in CSS pixels below which the dock collapses according to
     /// <see cref="MobileBehavior"/>. Defaults to <c>768</c>.
     /// </summary>

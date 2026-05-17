@@ -17,6 +17,7 @@ public partial class ShellLayout : LayoutComponentBase, IDisposable
     [Inject] private IJSRuntime JS { get; set; } = null!;
     [Inject] private IShellAuthContext Auth { get; set; } = null!;
     [Inject] private IHttpContextAccessor HttpContextAccessor { get; set; } = null!;
+    [Inject] private IServiceProvider Services { get; set; } = null!;
 
     private ShellDescriptor Descriptor => Registry.Current;
     private bool _isDark = true; // default: dark mode on
@@ -45,6 +46,12 @@ public partial class ShellLayout : LayoutComponentBase, IDisposable
     private ShellChromeMode ResolveChrome()
     {
         var ctx = HttpContextAccessor.HttpContext;
+        if (ctx is not null && Options.ChromeForServices is not null)
+        {
+            try { return Options.ChromeForServices(ctx, Services); }
+            catch { /* fall through */ }
+        }
+
         if (ctx is not null && Options.ChromeFor is not null)
         {
             try { return Options.ChromeFor(ctx); }

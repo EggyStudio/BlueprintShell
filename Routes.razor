@@ -26,7 +26,7 @@
         {
             var route = string.IsNullOrEmpty(slugObj as string) ? "/" : "/" + slugObj;
             var reader = Registry.Current.ReaderPages
-                .FirstOrDefault(r => RouteMatcher.Match(r.Route, route, out _));
+                .FirstOrDefault(r => !r.UseBlazorRouter && RouteMatcher.Match(r.Route, route, out _));
             if (reader is not null)
             {
                 if (reader.Layout is not null) return reader.Layout;

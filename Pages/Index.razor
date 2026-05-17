@@ -12,6 +12,7 @@
     Dictionary<string, string?>? readerArgs = null;
     foreach (var rp in Registry.Current.ReaderPages)
     {
+        if (rp.UseBlazorRouter) continue;
         if (!ShellAuthGate.Allow(Auth, rp.RequiresRole)) continue;
         if (RouteMatcher.Match(rp.Route, route, out var vals))
         {

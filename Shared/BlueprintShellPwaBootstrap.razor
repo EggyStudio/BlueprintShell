@@ -1,0 +1,17 @@
+@namespace BlueprintShell.Shared
+@using Microsoft.AspNetCore.Components
+
+@* Emits the service-worker registration <script> tag. Drop into App.razor
+   (or your root layout) when MapBlueprintShellPwa is wired up:
+
+       <BlueprintShellPwaBootstrap />
+
+   Set ScriptPath if you customised BlueprintShellPwaOptions.ServiceWorkerPath
+   or disabled RenderRegistrationScript and ship the script yourself. *@
+
+<script src="@ScriptPath" defer></script>
+
+@code {
+    /// <summary>URL of the bootstrap script. Defaults to the one served by MapBlueprintShellPwa.</summary>
+    [Parameter] public string ScriptPath { get; set; } = "/manifest.bootstrap.js";
+}

@@ -1,8 +1,21 @@
 @* Drop this file into your consuming project (or copy its using directives into
-   your own _Imports.razor) to surface the standard shell + BlazorBlueprint namespaces. *@
+   your own _Imports.razor) to surface the standard shell + BlazorBlueprint namespaces.
+
+   Note: BbPortalHost (required for dialogs / popovers / toasts) lives in
+   BlazorBlueprint.Primitives.Services, NOT BlazorBlueprint.Primitives. *@
+
+@using System.Net.Http
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@using Microsoft.JSInterop
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
+
 @using BlueprintShell
 @using BlueprintShell.Shared
 @using BlueprintShell.Shell
+
 @using BlazorBlueprint.Components
 @using BlazorBlueprint.Primitives
 @using BlazorBlueprint.Primitives.Services

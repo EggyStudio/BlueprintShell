@@ -100,6 +100,12 @@ public sealed class ReaderPageDescriptor
 
     /// <summary>Optional display title used for &lt;title&gt;.</summary>
     public string? Title { get; set; }
+
+    /// <summary>
+    /// When <see langword="true"/>, the catch-all router ignores this entry and lets Blazor's
+    /// own <c>@page</c> route handle rendering. The entry is kept for diagnostics / role tracking.
+    /// </summary>
+    public bool UseBlazorRouter { get; set; }
 }
 
 // -- Theming --

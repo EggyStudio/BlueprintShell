@@ -33,6 +33,21 @@ public sealed class BlueprintShellPwaOptions
     /// <summary>Additional URLs to precache in the service worker.</summary>
     public IList<string> ExtraCacheUrls { get; } = new List<string>();
 
+    /// <summary>
+    /// URL path prefixes the service worker will bypass entirely (no cache lookup, no fetch interception).
+    /// Defaults include <c>/_blazor</c>, <c>/_framework</c>, and the configured SignalR hub path —
+    /// caching these breaks Blazor Server reconnects after deploy.
+    /// </summary>
+    public IList<string> ExcludePathPrefixes { get; } = new List<string>();
+
+    /// <summary>
+    /// When <see langword="true"/> (the default), <see cref="BlueprintShellExtensions.MapBlueprintShellPwa"/>
+    /// emits a tiny <c>navigator.serviceWorker.register</c> script alongside the manifest at
+    /// <c>/manifest.bootstrap.js</c>. Use <see cref="BlueprintShell.Shared.BlueprintShellPwaBootstrap"/>
+    /// to render the script tag from a layout / App.razor.
+    /// </summary>
+    public bool RenderRegistrationScript { get; set; } = true;
+
     /// <summary>Optional list of manifest <c>icons</c> entries; defaults to a single 512×512 PNG if empty.</summary>
     public IList<PwaIcon> Icons { get; } = new List<PwaIcon>();
 }

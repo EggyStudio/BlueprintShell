@@ -81,6 +81,9 @@ public static class BlueprintShellExtensions
     {
         ArgumentNullException.ThrowIfNull(options);
 
+        var shellOptions = app.Services.GetRequiredService<BlueprintShellOptions>();
+        var hubPath = shellOptions.SignalRHubPath;
+
         app.MapGet(options.ManifestPath, (HttpContext ctx) =>
         {
             ctx.Response.ContentType = "application/manifest+json";
@@ -91,8 +94,17 @@ public static class BlueprintShellExtensions
         {
             ctx.Response.ContentType = "application/javascript";
             ctx.Response.Headers["Service-Worker-Allowed"] = "/";
-            return Results.Content(BuildServiceWorker(options), "application/javascript", Encoding.UTF8);
+            return Results.Content(BuildServiceWorker(options, hubPath), "application/javascript", Encoding.UTF8);
         });
+
+        if (options.RenderRegistrationScript)
+        {
+            app.MapGet("/manifest.bootstrap.js", (HttpContext ctx) =>
+            {
+                ctx.Response.ContentType = "application/javascript";
+                return Results.Content(BuildRegistrationScript(options), "application/javascript", Encoding.UTF8);
+            });
+        }
 
         return app;
     }
@@ -154,7 +166,7 @@ public static class BlueprintShellExtensions
         return JsonSerializer.Serialize(doc, new JsonSerializerOptions { WriteIndented = true });
     }
 
-    private static string BuildServiceWorker(BlueprintShellPwaOptions o)
+    private static string BuildServiceWorker(BlueprintShellPwaOptions o, string hubPath)
     {
         var precache = new List<string> { o.StartUrl };
         if (o.CacheStaticAssets)
@@ -169,10 +181,20 @@ public static class BlueprintShellExtensions
 
         precache.AddRange(o.ExtraCacheUrls);
 
-        var json = JsonSerializer.Serialize(precache);
+        var excludes = new HashSet<string>(o.ExcludePathPrefixes, StringComparer.Ordinal)
+        {
+            "/_blazor",
+            "/_framework",
+        };
+        if (!string.IsNullOrEmpty(hubPath)) excludes.Add(hubPath);
+
+        var precacheJson = JsonSerializer.Serialize(precache);
+        var excludesJson = JsonSerializer.Serialize(excludes.ToArray());
+
         return $$"""
             const CACHE = 'blueprintshell-v1';
-            const PRECACHE = {{json}};
+            const PRECACHE = {{precacheJson}};
+            const EXCLUDE = {{excludesJson}};
             self.addEventListener('install', e => {
                 e.waitUntil(caches.open(CACHE).then(c => c.addAll(PRECACHE)).then(() => self.skipWaiting()));
             });
@@ -183,6 +205,9 @@ public static class BlueprintShellExtensions
             });
             self.addEventListener('fetch', e => {
                 if (e.request.method !== 'GET') return;
+                const url = new URL(e.request.url);
+                if (url.origin !== self.location.origin) return;
+                for (const p of EXCLUDE) { if (url.pathname.startsWith(p)) return; }
                 e.respondWith(
                     caches.match(e.request).then(hit =>
                         hit || fetch(e.request).then(res => {
@@ -193,6 +218,19 @@ public static class BlueprintShellExtensions
                     )
                 );
             });
+            """;
+    }
+
+    private static string BuildRegistrationScript(BlueprintShellPwaOptions o)
+    {
+        var swPath = JsonSerializer.Serialize(o.ServiceWorkerPath);
+        return $$"""
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register({{swPath}}).catch(err =>
+                        console.warn('[BlueprintShell] SW registration failed:', err));
+                });
+            }
             """;
     }
 }

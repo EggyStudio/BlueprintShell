@@ -151,7 +151,7 @@ public sealed class ReaderPageAttribute : Attribute
     /// When <see langword="true"/>, the shell's catch-all router skips this entry and lets
     /// Blazor's own <c>@page</c> routing handle the URL. The page is still registered in
     /// <see cref="ShellRegistry"/> so it appears in diagnostics and participates in
-    /// <see cref="RequiresRole"/> gating (consumers must enforce the gate themselves —
+    /// <see cref="RequiresRole"/> gating (consumers must enforce the gate themselves -
     /// the shell can't intercept a request it doesn't render).
     /// Useful for incremental adoption on projects with many existing <c>@page</c> components.
     /// </summary>

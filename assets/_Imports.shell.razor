@@ -1,5 +1,11 @@
-@* Drop this file into your consuming project (or copy its using directives into
-   your own _Imports.razor) to surface the standard shell + BlazorBlueprint namespaces.
+@* BlueprintShell starter imports - shipped via contentFiles.
+   This file is named _Imports.shell.razor so it does NOT clobber your own
+   _Imports.razor on package install. Only files literally named
+   _Imports.razor are picked up by Razor as folder-level imports, so you have
+   two adoption paths:
+
+     1) Rename a project-local copy of this file to _Imports.razor, OR
+     2) Append the @using directives below into your existing _Imports.razor.
 
    Note: BbPortalHost (required for dialogs / popovers / toasts) lives in
    BlazorBlueprint.Primitives.Services, NOT BlazorBlueprint.Primitives. *@

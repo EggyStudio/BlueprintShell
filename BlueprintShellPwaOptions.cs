@@ -35,7 +35,7 @@ public sealed class BlueprintShellPwaOptions
 
     /// <summary>
     /// URL path prefixes the service worker will bypass entirely (no cache lookup, no fetch interception).
-    /// Defaults include <c>/_blazor</c>, <c>/_framework</c>, and the configured SignalR hub path —
+    /// Defaults include <c>/_blazor</c>, <c>/_framework</c>, and the configured SignalR hub path -
     /// caching these breaks Blazor Server reconnects after deploy.
     /// </summary>
     public IList<string> ExcludePathPrefixes { get; } = new List<string>();

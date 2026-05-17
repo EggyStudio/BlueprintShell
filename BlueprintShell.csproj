@@ -14,7 +14,7 @@
         <IsPackable>true</IsPackable>
         <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
         <PackageId>BlueprintShell</PackageId>
-        <Version>0.1.4</Version>
+        <Version>0.1.6</Version>
         <Description>Embeddable editor shell built on BlazorBlueprint. Spin up a themed, dockable editor UI on a configurable port from any .NET application.</Description>
         <Authors>EggyStudio</Authors>
         <RepositoryType>git</RepositoryType>
@@ -33,11 +33,18 @@
         <None Include=".github/assets/*" Pack="true" PackagePath="/" Visible="true"/>
     </ItemGroup>
 
-    <!-- Drop-in _Imports.razor surfaced via contentFiles for consumers. -->
+    <!-- Drop-in _Imports.shell.razor surfaced via contentFiles for consumers.
+         Named .shell.razor so it does NOT shadow the consumer's own _Imports.razor.
+         Modern PackageReference consumers receive it as a linked content file in
+         Solution Explorer; they rename it to _Imports.razor or copy its @using
+         lines into an existing one. Source lives in assets/ to keep it out of the
+         Razor SDK's implicit .razor glob, then we manually pack it. -->
     <ItemGroup>
-        <None Include="contentFiles/any/any/_Imports.razor"
+        <Content Remove="assets/_Imports.shell.razor" />
+        <None Remove="assets/_Imports.shell.razor" />
+        <None Include="assets/_Imports.shell.razor"
               Pack="true"
-              PackagePath="contentFiles/any/any/BlueprintShell._Imports.razor"
+              PackagePath="contentFiles/any/any/_Imports.shell.razor;content/_Imports.shell.razor"
               BuildAction="None"
               CopyToOutput="false"
               Flatten="false" />

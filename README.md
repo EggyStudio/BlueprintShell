@@ -44,6 +44,8 @@ dotnet add package BlueprintShell
 - [Multiple shell sources](#multiple-shell-sources)
 - [Dialogs / popovers (`BbPortalHost`)](#dialogs--popovers-bbportalhost)
 - [CSS / theming](#css--theming)
+- [Starter `_Imports.razor`](#starter-_importsrazor)
+- [Notes & FAQ](#notes--faq)
 - [Project Structure](#project-structure)
 - [License](#license)
 
@@ -335,6 +337,26 @@ registry.RegisterSource("my-theme", new ShellSource
 });
 ```
 
+## Starter `_Imports.razor`
+
+The package ships `assets/_Imports.shell.razor` via `contentFiles`, surfaced in your project's Solution Explorer view. It is **not** named `_Imports.razor` so it never silently shadows your own one. Two adoption paths:
+
+1. Rename a project-local copy to `_Imports.razor`, or
+2. Paste the `@using` lines into your existing `_Imports.razor`.
+
+If you don't see the file in Solution Explorer, your `<PackageReference>` may be omitting `contentfiles`; add `IncludeAssets="all"` (or copy the snippet from the [source on GitHub](https://github.com/EggyStudio/BlueprintShell/blob/main/assets/_Imports.shell.razor)).
+
+## Notes & FAQ
+
+**`[ReaderPage]` vs Blazor `@page` - which wins on the same URL?**
+Blazor's `Router` resolves `@page` routes first; the shell's catch-all `Pages/Index.razor` only runs when no `@page` matches. So on a collision, the consumer's `@page` component wins and the `[ReaderPage]` entry is silently shadowed. Use `[ReaderPage(UseBlazorRouter = true)]` when you want both - the registry still records the page (for diagnostics + role tracking) but defers rendering to your `@page` component.
+
+**Does the shell install `MapStaticAssets` globally?**
+Only in standalone mode (`EditorServerHost.StartAsync` calls `app.MapStaticAssets()` because it owns the whole web app). In embedded mode, `MapBlueprintShell` only maps the SignalR hub and the optional diagnostics endpoint. The shell's CSS / fonts / icons are served via the consumer's own static-files pipeline at the standard `/_content/BlueprintShell/...` prefix (rewriteable via `BlueprintShellOptions.StaticAssetsBasePath`).
+
+**Is the SignalR hub authenticated?**
+The shell maps the hub via plain `app.MapHub<ShellHub>(...)` with no `.RequireAuthorization()`. The host's auth pipeline applies whatever middleware it has in place. If you need auth-gated hub access in embedded mode, wrap the path in your own `app.MapGroup(o.SignalRHubPath).RequireAuthorization()` (or change `o.SignalRHubPath` and map the hub yourself).
+
 ## Project Structure
 
 ```
@@ -378,7 +400,7 @@ BlueprintShell/
 │   ├── css/app.css                 # Tailwind output
 │   ├── styles/themes/default.css   # OKLCH variable defaults
 │   └── images/
-├── contentFiles/any/any/_Imports.razor # Drop-in usings shipped to consumers
+├── assets/_Imports.shell.razor     # Starter Razor imports shipped via contentFiles
 ├── LICENSE                         # MPL 2.0
 └── README.md
 ```

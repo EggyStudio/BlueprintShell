@@ -33,6 +33,16 @@
         <None Include=".github/assets/*" Pack="true" PackagePath="/" Visible="true"/>
     </ItemGroup>
 
+    <!-- Drop-in _Imports.razor surfaced via contentFiles for consumers. -->
+    <ItemGroup>
+        <None Include="contentFiles/any/any/_Imports.razor"
+              Pack="true"
+              PackagePath="contentFiles/any/any/BlueprintShell._Imports.razor"
+              BuildAction="None"
+              CopyToOutput="false"
+              Flatten="false" />
+    </ItemGroup>
+
     <!-- Surface GitHub Actions workflows in the IDE solution view. 
          Not packed, not copied to output. -->
     <ItemGroup>

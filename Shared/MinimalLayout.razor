@@ -1,0 +1,60 @@
+@inherits LayoutComponentBase
+@namespace BlueprintShell.Shared
+@using BlueprintShell.Shell
+
+@* Minimal chrome: header bar only, no dock splitters or panel headers. *@
+<div class="relative min-h-screen flex flex-col bg-background text-foreground">
+
+    <ShellThemeStyle />
+
+    <header class="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div class="flex h-14 items-center gap-4 px-4">
+            <a href="/" class="flex items-center gap-2 shrink-0">
+                <LucideIcon Name="layout-dashboard" Size="18" class="text-primary" />
+                <span class="text-sm font-semibold tracking-tight">@Options.AppTitle</span>
+            </a>
+
+            @foreach (var slot in Registry.HeaderSlots)
+            {
+                @slot
+            }
+
+            <div class="flex-1" />
+
+            <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon"
+                      @onclick="ToggleDarkMode" title="Toggle dark mode">
+                <LucideIcon Name="@(_isDark ? "sun" : "moon")" Size="18" />
+            </BbButton>
+        </div>
+    </header>
+
+    <main class="flex-1 overflow-auto">
+        @Body
+    </main>
+</div>
+
+<BbToastProvider Position="ToastPosition.BottomRight" />
+<BbDialogProvider />
+<BbPortalHost />
+
+@code {
+    [Inject] private ShellRegistry Registry { get; set; } = null!;
+    [Inject] private BlueprintShellOptions Options { get; set; } = null!;
+    [Inject] private IJSRuntime JS { get; set; } = null!;
+
+    private bool _isDark = true;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        try { _isDark = await JS.InvokeAsync<bool>("isDarkModeEnabled"); }
+        catch { /* JS not ready */ }
+        StateHasChanged();
+    }
+
+    private async Task ToggleDarkMode()
+    {
+        await JS.InvokeVoidAsync("toggleDarkMode");
+        _isDark = !_isDark;
+    }
+}

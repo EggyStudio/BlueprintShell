@@ -1,0 +1,15 @@
+@inherits LayoutComponentBase
+@namespace BlueprintShell.Shared
+@using BlueprintShell.Shell
+
+@* Hidden chrome: just theme + cascading services around the body. *@
+<div class="relative min-h-screen flex flex-col bg-background text-foreground">
+    <ShellThemeStyle />
+    <main class="flex-1 overflow-auto">
+        @Body
+    </main>
+</div>
+
+<BbToastProvider Position="ToastPosition.BottomRight" />
+<BbDialogProvider />
+<BbPortalHost />

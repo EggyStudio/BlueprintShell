@@ -1,5 +1,6 @@
 using BlueprintShell.Shell;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Http;
 using Microsoft.JSInterop;
 
 namespace BlueprintShell.Shared;
@@ -14,6 +15,8 @@ public partial class ShellLayout : LayoutComponentBase, IDisposable
     [Inject] private ShellRegistry Registry { get; set; } = null!;
     [Inject] private BlueprintShellOptions Options { get; set; } = null!;
     [Inject] private IJSRuntime JS { get; set; } = null!;
+    [Inject] private IShellAuthContext Auth { get; set; } = null!;
+    [Inject] private IHttpContextAccessor HttpContextAccessor { get; set; } = null!;
 
     private ShellDescriptor Descriptor => Registry.Current;
     private bool _isDark = true; // default: dark mode on
@@ -37,6 +40,18 @@ public partial class ShellLayout : LayoutComponentBase, IDisposable
     {
         await JS.InvokeVoidAsync("toggleDarkMode");
         _isDark = !_isDark;
+    }
+
+    private ShellChromeMode ResolveChrome()
+    {
+        var ctx = HttpContextAccessor.HttpContext;
+        if (ctx is not null && Options.ChromeFor is not null)
+        {
+            try { return Options.ChromeFor(ctx); }
+            catch { /* fall through */ }
+        }
+
+        return Options.ChromeMode;
     }
 
     private void OnShellChanged() => InvokeAsync(StateHasChanged);

@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Components;
+
 namespace BlueprintShell.Shell;
 
 /// <summary>
@@ -31,11 +33,64 @@ public sealed class ShellRegistry
 {
     private readonly Lock _lock = new();
     private readonly Dictionary<string, ShellSource> _sources = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, ThemePreset> _runtimeThemes = new(StringComparer.Ordinal);
+    private readonly List<RenderFragment> _headerSlots = new();
     private ShellDescriptor _current = new();
+    private string? _activeTheme;
     private int _version;
 
     /// <summary>Fired when the merged shell descriptor is replaced (source upserted/removed).</summary>
     public event Action? Changed;
+
+    /// <summary>Currently active theme preset name. May be null when no theme has been set.</summary>
+    public string? ActiveTheme
+    {
+        get { lock (_lock) return _activeTheme; }
+    }
+
+    /// <summary>Header-slot fragments rendered by the shell layout between the brand and the dark-mode toggle.</summary>
+    public IReadOnlyList<RenderFragment> HeaderSlots
+    {
+        get { lock (_lock) return _headerSlots.ToArray(); }
+    }
+
+    /// <summary>
+    /// Registers a render fragment that the shell layout will draw in its header bar.
+    /// Multiple fragments are rendered in registration order.
+    /// </summary>
+    public void RegisterHeaderSlot(RenderFragment fragment)
+    {
+        ArgumentNullException.ThrowIfNull(fragment);
+        lock (_lock) _headerSlots.Add(fragment);
+        Changed?.Invoke();
+    }
+
+    /// <summary>Registers (or overwrites) a named theme preset and fires <see cref="Changed"/>.</summary>
+    public void RegisterTheme(string name, ThemePreset preset)
+    {
+        if (string.IsNullOrEmpty(name)) throw new ArgumentException("name required", nameof(name));
+        ArgumentNullException.ThrowIfNull(preset);
+        lock (_lock)
+        {
+            _runtimeThemes[name] = preset;
+            _current = Merge(_sources, _runtimeThemes);
+            _version++;
+        }
+
+        Changed?.Invoke();
+    }
+
+    /// <summary>Selects the active theme preset. Pass <see langword="null"/> to clear.</summary>
+    public void SetActiveTheme(string? name)
+    {
+        lock (_lock)
+        {
+            _activeTheme = name;
+            _version++;
+        }
+
+        Changed?.Invoke();
+    }
 
     /// <summary>Monotonically increasing version; bumped on every merge.</summary>
     public int Version
@@ -70,7 +125,7 @@ public sealed class ShellRegistry
         lock (_lock)
         {
             _sources[sourceId] = source;
-            _current = Merge(_sources);
+            _current = Merge(_sources, _runtimeThemes);
             _version++;
         }
 
@@ -90,7 +145,7 @@ public sealed class ShellRegistry
             changed = _sources.Remove(sourceId);
             if (changed)
             {
-                _current = Merge(_sources);
+                _current = Merge(_sources, _runtimeThemes);
                 _version++;
             }
         }
@@ -117,7 +172,9 @@ public sealed class ShellRegistry
         RegisterSource(ShellSourceIds.Dynamic, source);
     }
 
-    private static ShellDescriptor Merge(Dictionary<string, ShellSource> sources)
+    private static ShellDescriptor Merge(
+        Dictionary<string, ShellSource> sources,
+        Dictionary<string, ThemePreset> runtimeThemes)
     {
         var orderedSources = sources
             .OrderBy(kv => kv.Value.Precedence)
@@ -160,9 +217,30 @@ public sealed class ShellRegistry
                     InitialSize = attr.InitialSize,
                     Closeable = attr.Closeable,
                     Visible = attr.Visible,
+                    RequiresRole = attr.RequiresRole,
                 });
             }
+
+            foreach (var (attr, type) in src.ReaderPages)
+            {
+                merged.ReaderPages.Add(new ReaderPageDescriptor
+                {
+                    Id = attr.Id,
+                    Route = attr.Route,
+                    ComponentType = type,
+                    Layout = attr.Layout,
+                    Chrome = attr.Chrome,
+                    RequiresRole = attr.RequiresRole,
+                    Title = attr.Title,
+                });
+            }
+
+            foreach (var (k, v) in src.Themes)
+                merged.Themes[k] = v;
         }
+
+        foreach (var (k, v) in runtimeThemes)
+            merged.Themes[k] = v;
 
         // Collision policy: panels with the same Id - keep the LAST occurrence (higher-precedence
         // sources were appended later). Empty-id panels are kept verbatim.

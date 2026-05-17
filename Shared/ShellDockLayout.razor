@@ -1,4 +1,5 @@
 @using BlueprintShell.Shell
+@inject BlueprintShellOptions Options
 
 @{
     var topPanels = Panels.Where(p => p.Visible && p.DefaultZone == DockZone.Top).OrderBy(p => p.TabOrder).ToList();
@@ -7,9 +8,21 @@
     var bottomPanels = Panels.Where(p => p.Visible && p.DefaultZone == DockZone.Bottom).ToList();
     var centerPanels = Panels.Where(p => p.Visible && p.DefaultZone == DockZone.Center).ToList();
     var hasTop = leftPanels.Count > 0 || rightPanels.Count > 0 || centerPanels.Count > 0;
+    var stack = Options.MobileBehavior == MobileBehavior.Stacked;
+    var hideSides = Options.MobileBehavior == MobileBehavior.Hidden;
+    var bp = Options.MobileBreakpointPx;
 }
 
-<div class="flex flex-col flex-1 overflow-hidden min-h-0">
+<style>
+    @@media (max-width: @(bp)px) {
+        [data-dock-shell] [data-dock-row] { flex-direction: column !important; }
+        [data-dock-shell] [data-dock-side] { width: 100% !important; min-width: 0 !important; border: none !important; }
+        [data-dock-shell] [data-dock-bottom] { height: auto !important; min-height: 0 !important; }
+        @(hideSides ? "[data-dock-shell] [data-dock-side]{display:none!important;}" : "")
+    }
+</style>
+
+<div class="flex flex-col flex-1 overflow-hidden min-h-0" data-dock-shell>
     @* -- Top panels (headers, nav bars, etc.) -- *@
     @foreach (var panel in topPanels)
     {
@@ -30,10 +43,10 @@
     @* -- Top row: sidebars fill the available horizontal space -- *@
     @if (hasTop)
     {
-        <div class="flex flex-1 overflow-hidden min-h-0">
+        <div class="flex flex-1 overflow-hidden min-h-0" data-dock-row>
             @if (leftPanels.Count > 0)
             {
-                <div class="flex flex-col overflow-hidden border-r border-border/40"
+                <div class="flex flex-col overflow-hidden border-r border-border/40" data-dock-side="left"
                      style="width: @(SizeOf(leftPanels)); min-width: 180px;">
                     <DockPanelGroup Panels="leftPanels" />
                 </div>
@@ -53,7 +66,7 @@
 
             @if (rightPanels.Count > 0)
             {
-                <div class="flex flex-col overflow-hidden border-l border-border/40"
+                <div class="flex flex-col overflow-hidden border-l border-border/40" data-dock-side="right"
                      style="width: @(SizeOf(rightPanels)); min-width: 220px;">
                     <DockPanelGroup Panels="rightPanels" />
                 </div>
@@ -64,7 +77,7 @@
     @* -- Bottom panel strip -- *@
     @if (bottomPanels.Count > 0)
     {
-        <div class="overflow-hidden border-t border-border/40"
+        <div class="overflow-hidden border-t border-border/40" data-dock-bottom
              style="height: @(HeightOf(bottomPanels)); min-height: 120px;">
             <DockPanelGroup Panels="bottomPanels" />
         </div>

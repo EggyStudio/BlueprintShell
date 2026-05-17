@@ -25,8 +25,16 @@ public sealed class ShellSource
     public IReadOnlyList<(EditorPanelAttribute Attr, Type Type)> PanelComponents { get; init; }
         = Array.Empty<(EditorPanelAttribute, Type)>();
 
+    /// <summary>Discovered <c>[ReaderPage]</c> Blazor component types with their attribute metadata.</summary>
+    public IReadOnlyList<(ReaderPageAttribute Attr, Type Type)> ReaderPages { get; init; }
+        = Array.Empty<(ReaderPageAttribute, Type)>();
+
     /// <summary>Raw CSS snippets to inject into the editor page.</summary>
     public IReadOnlyList<string> CustomCss { get; init; } = Array.Empty<string>();
+
+    /// <summary>Theme presets contributed by this source. Merged into <see cref="ShellDescriptor.Themes"/>.</summary>
+    public IReadOnlyDictionary<string, ThemePreset> Themes { get; init; }
+        = new Dictionary<string, ThemePreset>(StringComparer.Ordinal);
 
     /// <summary>
     /// Higher value wins on duplicate <see cref="PanelDescriptor.Id"/>. Convention:

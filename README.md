@@ -76,6 +76,27 @@ Then add the shell's `App`, `Routes`, and `ShellLayout` into your Razor routing 
 | `Url` | `string` | `"http://localhost:5000"` | Kestrel listen URL. Accepts any format supported by `UseUrls`, e.g. `"http://*:5100"` or `"https://localhost:5001;http://localhost:5000"`. Only used in standalone mode. |
 | `AppTitle` | `string` | `"Blueprint Shell"` | Title shown in the shell header and browser tab. |
 | `LaunchBrowser` | `bool` | `false` | Open the system browser pointing at `Url` once the server is ready. |
+| `ChromeMode` | `ShellChromeMode` | `Full` | Default chrome level: `Full` (dock + header), `Minimal` (header only), `Hidden` (nothing - just shell services around `@Body`). |
+| `ChromeFor` | `Func<HttpContext, ShellChromeMode>?` | `null` | Per-request override; evaluated before `ChromeMode`. |
+| `MobileBreakpointPx` | `int` | `768` | Viewport width below which the dock collapses. |
+| `MobileBehavior` | `MobileBehavior` | `Stacked` | `Stacked`, `Drawer`, or `Hidden` below the mobile breakpoint. |
+| `StaticAssetsBasePath` | `string?` | `null` | Override the `/_content/BlueprintShell` prefix used by the shell's CSS imports. |
+| `ScanAssemblies` | `IList<Assembly>` | _all loaded_ | Explicit assemblies to scan for `[EditorShell]`, `[EditorPanel]`, `[ReaderPage]`. Empty (default) scans the whole AppDomain. |
+| `EnableDiagnostics` | `bool` | `false` | Expose `GET /_shell/diagnostics` (recommended only in Development). |
+| `SignalRHubPath` | `string` | `"/shell-hub"` | Customise to avoid collisions with other SignalR endpoints. |
+| `ActiveTheme` | `string?` | `null` | Name of the initial theme preset (see [Theme presets](#theme-presets)). |
+
+### Per-request chrome (anonymous reader vs. logged-in editor)
+
+```csharp
+builder.Services.AddBlueprintShell(o =>
+{
+    o.AppTitle = "Encyclopedia";
+    o.ChromeFor = ctx => ctx.Request.Path.StartsWithSegments("/edit")
+        ? ShellChromeMode.Full
+        : ShellChromeMode.Hidden;
+});
+```
 
 ---
 
@@ -109,6 +130,7 @@ Decorate any Blazor component with `[EditorPanel]` to register it as a dockable 
 | `InitialSize` | Fraction (0–1) of the parent dock area. Default `0.25`. |
 | `Closeable` | Whether the user can close the panel. Default `true`. |
 | `Visible` | Whether the panel starts visible. Default `true`. |
+| `RequiresRole` | Filters the panel out for requests where `IShellAuthContext.Roles` doesn't contain the value (`"*"` means any authenticated user). |
 
 ---
 
@@ -169,6 +191,93 @@ var shell = await EditorServerHost.StartAsync(registry: registry);
 ```
 
 ---
+
+## Reader pages
+
+Reader pages are routed components that bypass the dock layout - useful for full-bleed
+content (articles, marketing pages) hosted alongside an editor.
+
+```razor
+@* Article.razor *@
+@attribute [ReaderPage("article", "/wiki/{Identifier}",
+    Chrome = ShellChromeMode.Hidden)]
+
+@code {
+    [Parameter] public string? Identifier { get; set; }
+}
+```
+
+The shell resolves the route via a catch-all router and forwards segments as
+`[Parameter]` properties on the component (same convention as `@page`).
+
+## Auth-aware chrome
+
+Implement `IShellAuthContext` and the shell will filter `[EditorPanel(..., RequiresRole = "...")]`
+panels and `[ReaderPage(..., RequiresRole = "...")]` pages automatically. Use `"*"` to require
+any authenticated user.
+
+```csharp
+public sealed class MyAuthContext : IShellAuthContext
+{
+    public bool IsAuthenticated => /* ... */;
+    public string? UserId => /* ... */;
+    public IReadOnlySet<string> Roles => /* ... */;
+}
+
+builder.Services.AddScoped<IShellAuthContext, MyAuthContext>();
+```
+
+## Header slots
+
+Drop your own content into the shell header (e.g. a global search box):
+
+```csharp
+registry.RegisterHeaderSlot(builder =>
+{
+    builder.OpenComponent<GlobalSearchBox>(0);
+    builder.CloseComponent();
+});
+```
+
+## Theme presets
+
+```csharp
+registry.RegisterTheme("reader", new ThemePreset
+{
+    Variables =
+    {
+        ["--background"] = "oklch(1 0 0)",
+        ["--foreground"] = "oklch(0.15 0 0)",
+        ["--font-sans"]  = "\"Source Serif Pro\", Georgia, serif",
+    },
+});
+
+registry.SetActiveTheme("reader");
+```
+
+The active preset is rendered as `<style id="bp-active-theme">` and replaced when
+`SetActiveTheme` is called.
+
+## PWA
+
+```csharp
+app.MapBlueprintShellPwa(new BlueprintShellPwaOptions
+{
+    ShortName        = "Encyclopedia",
+    ThemeColor       = "#0a0a0a",
+    BackgroundColor  = "#ffffff",
+    CacheStaticAssets = true,
+});
+```
+
+Serves a manifest at `/manifest.webmanifest` and a service worker at `/sw.js`,
+precaching the shell's own CSS and any URLs you add via `ExtraCacheUrls`.
+
+## Diagnostics
+
+Set `o.EnableDiagnostics = true` and `GET /_shell/diagnostics` returns a JSON dump
+of panels, reader pages, themes, and loaded assemblies - useful when something
+doesn't render and you want to know whether it was discovered.
 
 ## CSS / theming
 

@@ -3,7 +3,9 @@ using BlueprintShell.Hubs;
 using BlueprintShell.Shell;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 
 namespace BlueprintShell;
@@ -57,12 +59,14 @@ public static class EditorServerHost
         builder.WebHost.UseStaticWebAssets();
 
         var shellRegistry = registry ?? new ShellRegistry();
-        var staticCount   = StaticShellLoader.LoadInto(shellRegistry);
+        var staticCount   = StaticShellLoader.LoadInto(shellRegistry, options.ScanAssemblies.Count > 0 ? options.ScanAssemblies.ToArray() : null);
         Console.WriteLine($"[BlueprintShell] Static shell registrations: {staticCount}");
 
         builder.Services.AddSingleton(options);
         builder.Services.AddSingleton(shellRegistry);
         builder.Services.AddSingleton<ShellState>();
+        builder.Services.AddHttpContextAccessor();
+        builder.Services.TryAddScoped<IShellAuthContext, AnonymousShellAuthContext>();
 
         builder.Services
             .AddRazorComponents()
@@ -83,7 +87,19 @@ public static class EditorServerHost
         app.MapStaticAssets();
         app.MapRazorComponents<App>()
             .AddInteractiveServerRenderMode();
-        app.MapHub<ShellHub>("/shell-hub");
+        app.MapHub<ShellHub>(options.SignalRHubPath);
+
+        if (options.EnableDiagnostics)
+        {
+            app.MapGet("/_shell/diagnostics", (ShellRegistry r) => Results.Json(new
+            {
+                version = r.Version,
+                activeTheme = r.ActiveTheme,
+                themes = r.Current.Themes.Keys,
+                panels = r.Current.Panels.Select(p => new { p.Id, p.Title, zone = p.DefaultZone.ToString(), p.Route, p.RequiresRole }),
+                readerPages = r.Current.ReaderPages.Select(rp => new { rp.Id, rp.Route, rp.Title, rp.RequiresRole }),
+            }));
+        }
 
         await app.StartAsync();
         return app;

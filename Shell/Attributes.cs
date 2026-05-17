@@ -85,6 +85,13 @@ public sealed class EditorPanelAttribute : Attribute
     /// <summary>Priority for ordering when multiple panels compete for the same position. Lower values win.</summary>
     public int Order { get; set; }
 
+    /// <summary>
+    /// When set, the panel is only included in the merged shell when
+    /// <see cref="IShellAuthContext.Roles"/> contains this value (or the role is
+    /// <c>"*"</c> meaning any authenticated user).
+    /// </summary>
+    public string? RequiresRole { get; set; }
+
     /// <summary>Creates a new <see cref="EditorPanelAttribute"/> with the specified panel metadata.</summary>
     /// <param name="id">Unique panel identifier.</param>
     /// <param name="title">Display title for the panel header / tab.</param>
@@ -94,5 +101,58 @@ public sealed class EditorPanelAttribute : Attribute
         Id = id;
         Title = title;
         Zone = zone;
+    }
+}
+
+// -- Reader Page Discovery --
+
+/// <summary>
+/// Marks a Blazor component as a non-dockable routed page rendered inside the shell.
+/// Reader pages bypass the dock layout entirely: no panel headers, no splitters, no close
+/// button - they receive only the configured chrome (see <see cref="ShellChromeMode"/>)
+/// plus access to shell services (theming, auth, registry).
+/// </summary>
+/// <remarks>
+/// Apply via <c>@attribute [ReaderPage(...)]</c> in a <c>.razor</c> file. The route is
+/// registered with the shell router and parameters are forwarded to the component the
+/// same way an <c>@page</c> directive would.
+/// </remarks>
+/// <example>
+/// <code>
+/// @attribute [ReaderPage("article", "/wiki/{Identifier}")]
+///
+/// @code {
+///     [Parameter] public string? Identifier { get; set; }
+/// }
+/// </code>
+/// </example>
+[AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
+public sealed class ReaderPageAttribute : Attribute
+{
+    /// <summary>Unique reader-page identifier.</summary>
+    public string Id { get; }
+
+    /// <summary>Route template (e.g. <c>"/wiki/{Identifier}"</c>).</summary>
+    public string Route { get; }
+
+    /// <summary>Optional chrome override for this specific page. Falls back to <see cref="BlueprintShellOptions.ChromeMode"/> when null.</summary>
+    public ShellChromeMode? Chrome { get; set; }
+
+    /// <summary>Optional layout type. When null, the shell selects a layout from <see cref="Chrome"/>.</summary>
+    public Type? Layout { get; set; }
+
+    /// <summary>Optional role requirement; honoured by <see cref="IShellAuthContext"/>.</summary>
+    public string? RequiresRole { get; set; }
+
+    /// <summary>Display title used for &lt;title&gt; and breadcrumbs. Falls back to the component name.</summary>
+    public string? Title { get; set; }
+
+    /// <summary>Creates a new <see cref="ReaderPageAttribute"/>.</summary>
+    /// <param name="id">Unique reader-page identifier (used in diagnostics).</param>
+    /// <param name="route">Route template, may contain Blazor route parameters.</param>
+    public ReaderPageAttribute(string id, string route)
+    {
+        Id = id;
+        Route = route;
     }
 }

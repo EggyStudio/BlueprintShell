@@ -3,63 +3,68 @@ using System.Reflection;
 namespace BlueprintShell.Shell;
 
 /// <summary>
-/// Discovers compile-time-registered editor shells by reflecting across every loaded assembly
-/// for static methods marked with <see cref="GeneratedShellRegistrationAttribute"/>, and invokes
-/// each with a <see cref="ShellRegistry"/>. Mirrors the
-/// <c>BehaviorsPlugin</c> reflection scan used by the ECS behaviors module.
+/// Discovers compile-time-registered editor shells, panels, and reader pages by reflecting
+/// across loaded assemblies (or an explicit list supplied via <see cref="BlueprintShellOptions.ScanAssemblies"/>),
+/// and feeds them into the <see cref="ShellRegistry"/>.
 /// </summary>
 /// <remarks>
-/// Each generated registration method is emitted by the <c>EditorShellGenerator</c> source
-/// generator (one method per consuming assembly) and contributes a
-/// <see cref="ShellSourceIds.Static"/>-keyed <see cref="ShellSource"/> to the registry.
+/// <para>Two passes run:</para>
+/// <list type="number">
+///   <item><description>Static methods marked with <see cref="GeneratedShellRegistrationAttribute"/> are invoked
+///         (these are emitted by the source generator).</description></item>
+///   <item><description>Types marked with <see cref="EditorPanelAttribute"/> / <see cref="ReaderPageAttribute"/>
+///         are collected into a single <see cref="ShellSourceIds.Static"/> source.</description></item>
+/// </list>
 /// </remarks>
-/// <seealso cref="GeneratedShellRegistrationAttribute"/>
-/// <seealso cref="ShellRegistry"/>
 public static class StaticShellLoader
 {
-    /// <summary>Reflects across loaded assemblies and invokes every generated registration method.</summary>
-    /// <param name="registry">The registry that receives the static contributions.</param>
-    /// <returns>The number of registration methods successfully invoked.</returns>
-    /// <exception cref="ArgumentNullException"><paramref name="registry"/> is <see langword="null"/>.</exception>
-    public static int LoadInto(ShellRegistry registry)
+    /// <summary>Loads from every assembly in <see cref="AppDomain.CurrentDomain"/>.</summary>
+    public static int LoadInto(ShellRegistry registry) => LoadInto(registry, scanAssemblies: null);
+
+    /// <summary>
+    /// Loads from an explicit assembly list. When <paramref name="scanAssemblies"/> is null or empty
+    /// the current AppDomain is scanned instead.
+    /// </summary>
+    public static int LoadInto(ShellRegistry registry, IReadOnlyCollection<Assembly>? scanAssemblies)
     {
         ArgumentNullException.ThrowIfNull(registry);
 
+        var assemblies = scanAssemblies is { Count: > 0 }
+            ? scanAssemblies
+            : AppDomain.CurrentDomain.GetAssemblies();
+
+        int invoked = InvokeGeneratedRegistrations(registry, assemblies);
+        var (panels, readers) = CollectAttributedComponents(assemblies);
+
+        if (panels.Count > 0 || readers.Count > 0)
+        {
+            registry.RegisterSource(ShellSourceIds.Static + ":discovered", new ShellSource
+            {
+                PanelComponents = panels,
+                ReaderPages = readers,
+                Precedence = 0,
+            });
+        }
+
+        return invoked;
+    }
+
+    private static int InvokeGeneratedRegistrations(ShellRegistry registry, IEnumerable<Assembly> assemblies)
+    {
         const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static;
         var attrType = typeof(GeneratedShellRegistrationAttribute);
         var registryType = typeof(ShellRegistry);
 
         int invoked = 0;
-        foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+        foreach (var asm in assemblies)
         {
             if (asm.IsDynamic) continue;
 
-            Type[] types;
-            try
+            foreach (var t in SafeGetTypes(asm))
             {
-                types = asm.GetTypes();
-            }
-            catch (ReflectionTypeLoadException ex)
-            {
-                types = ex.Types.Where(t => t is not null).ToArray()!;
-            }
-            catch
-            {
-                continue;
-            }
-
-            foreach (var t in types)
-            {
-                if (t is null) continue;
                 MethodInfo[] methods;
-                try
-                {
-                    methods = t.GetMethods(flags);
-                }
-                catch
-                {
-                    continue;
-                }
+                try { methods = t.GetMethods(flags); }
+                catch { continue; }
 
                 foreach (var m in methods)
                 {
@@ -80,5 +85,34 @@ public static class StaticShellLoader
         }
 
         return invoked;
+    }
+
+    private static (List<(EditorPanelAttribute, Type)> panels, List<(ReaderPageAttribute, Type)> readers)
+        CollectAttributedComponents(IEnumerable<Assembly> assemblies)
+    {
+        var panels = new List<(EditorPanelAttribute, Type)>();
+        var readers = new List<(ReaderPageAttribute, Type)>();
+
+        foreach (var asm in assemblies)
+        {
+            if (asm.IsDynamic) continue;
+            foreach (var t in SafeGetTypes(asm))
+            {
+                foreach (var attr in t.GetCustomAttributes(typeof(EditorPanelAttribute), inherit: false))
+                    panels.Add(((EditorPanelAttribute)attr, t));
+
+                foreach (var attr in t.GetCustomAttributes(typeof(ReaderPageAttribute), inherit: false))
+                    readers.Add(((ReaderPageAttribute)attr, t));
+            }
+        }
+
+        return (panels, readers);
+    }
+
+    private static IEnumerable<Type> SafeGetTypes(Assembly asm)
+    {
+        try { return asm.GetTypes(); }
+        catch (ReflectionTypeLoadException ex) { return ex.Types.Where(t => t is not null)!; }
+        catch { return Array.Empty<Type>(); }
     }
 }

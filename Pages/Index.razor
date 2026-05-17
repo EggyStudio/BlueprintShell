@@ -2,20 +2,56 @@
 @page "/{*Slug}"
 
 @{
-    var route     = string.IsNullOrEmpty(Slug) ? "/" : $"/{Slug}";
-    var panel     = Registry.Current.Panels.FirstOrDefault(p => p.Route == route);
-    var isRoot    = string.IsNullOrEmpty(Slug);
-    var allPanels = Registry.Current.Panels.Where(p => p.Visible).ToList();
-    var pageTitle = panel?.Title is { Length: > 0 } t
-        ? $"{t} - {Options.AppTitle}"
-        : Options.AppTitle;
+    var route = string.IsNullOrEmpty(Slug) ? "/" : $"/{Slug}";
+    var isRoot = string.IsNullOrEmpty(Slug);
+    var allPanels = Registry.Current.Panels
+        .Where(p => p.Visible && ShellAuthGate.Allow(Auth, p.RequiresRole))
+        .ToList();
+
+    ReaderPageDescriptor? reader = null;
+    Dictionary<string, string?>? readerArgs = null;
+    foreach (var rp in Registry.Current.ReaderPages)
+    {
+        if (!ShellAuthGate.Allow(Auth, rp.RequiresRole)) continue;
+        if (RouteMatcher.Match(rp.Route, route, out var vals))
+        {
+            reader = rp;
+            readerArgs = vals;
+            break;
+        }
+    }
+
+    PanelDescriptor? panel = null;
+    Dictionary<string, string?>? panelArgs = null;
+    if (reader is null)
+    {
+        foreach (var p in allPanels)
+        {
+            if (string.IsNullOrEmpty(p.Route)) continue;
+            if (RouteMatcher.Match(p.Route, route, out var vals))
+            {
+                panel = p;
+                panelArgs = vals;
+                break;
+            }
+        }
+    }
+
+    var title = reader?.Title ?? panel?.Title;
+    var pageTitle = string.IsNullOrEmpty(title)
+        ? Options.AppTitle
+        : $"{title} - {Options.AppTitle}";
 }
 
 <PageTitle>@pageTitle</PageTitle>
 
-@if (panel?.ComponentType is not null)
+@if (reader is not null)
 {
-    <DynamicComponent Type="panel.ComponentType" />
+    <DynamicComponent Type="reader.ComponentType" Parameters="ToParameters(readerArgs)" />
+}
+else if (panel?.ComponentType is not null)
+{
+    <DynamicComponent Type="panel.ComponentType" Parameters="ToParameters(panelArgs)" />
 }
 else if (panel?.Content is { Count: > 0 })
 {
@@ -40,4 +76,13 @@ else if (!isRoot)
     [Parameter] public string? Slug { get; set; }
     [Inject] private ShellRegistry Registry { get; set; } = null!;
     [Inject] private BlueprintShellOptions Options { get; set; } = null!;
+    [Inject] private IShellAuthContext Auth { get; set; } = null!;
+
+    private static IDictionary<string, object?>? ToParameters(Dictionary<string, string?>? args)
+    {
+        if (args is null || args.Count == 0) return null;
+        var dict = new Dictionary<string, object?>(args.Count, StringComparer.OrdinalIgnoreCase);
+        foreach (var (k, v) in args) dict[k] = v;
+        return dict;
+    }
 }

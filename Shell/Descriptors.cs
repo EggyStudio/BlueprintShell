@@ -63,6 +63,60 @@ public sealed class ShellDescriptor
     /// Injected into the page at render time via a <c>&lt;style&gt;</c> block.
     /// </summary>
     public List<string> CustomCss { get; set; } = [];
+
+    /// <summary>Routed pages registered via <see cref="ReaderPageAttribute"/>.</summary>
+    public List<ReaderPageDescriptor> ReaderPages { get; set; } = [];
+
+    /// <summary>Theme presets keyed by name (see <see cref="ThemePreset"/>).</summary>
+    public Dictionary<string, ThemePreset> Themes { get; set; } = new(StringComparer.Ordinal);
+}
+
+// -- Reader Pages --
+
+/// <summary>Routed component registered via <see cref="ReaderPageAttribute"/>.</summary>
+/// <remarks>
+/// Reader pages are rendered with the chrome level set by <see cref="Chrome"/> (falling back
+/// to <see cref="BlueprintShellOptions.ChromeMode"/>) and bypass the dock layout entirely.
+/// </remarks>
+public sealed class ReaderPageDescriptor
+{
+    /// <summary>Unique identifier (used in diagnostics).</summary>
+    public string Id { get; set; } = string.Empty;
+
+    /// <summary>Route template.</summary>
+    public string Route { get; set; } = string.Empty;
+
+    /// <summary>Component type rendered for this route.</summary>
+    public Type ComponentType { get; set; } = null!;
+
+    /// <summary>Optional layout override. When null the shell picks one from <see cref="Chrome"/>.</summary>
+    public Type? Layout { get; set; }
+
+    /// <summary>Chrome override for this page; null defers to the shell options.</summary>
+    public ShellChromeMode? Chrome { get; set; }
+
+    /// <summary>Optional role requirement; honoured by <see cref="IShellAuthContext"/>.</summary>
+    public string? RequiresRole { get; set; }
+
+    /// <summary>Optional display title used for &lt;title&gt;.</summary>
+    public string? Title { get; set; }
+}
+
+// -- Theming --
+
+/// <summary>A named bundle of CSS variable overrides applied at runtime.</summary>
+/// <remarks>
+/// Presets are emitted into a single <c>&lt;style id="bp-active-theme"&gt;</c> block whose
+/// contents are replaced when <see cref="ShellRegistry.SetActiveTheme"/> swaps the active
+/// preset.
+/// </remarks>
+public sealed class ThemePreset
+{
+    /// <summary>CSS custom-property name → value pairs (e.g. <c>"--background"</c> → <c>"oklch(1 0 0)"</c>).</summary>
+    public Dictionary<string, string> Variables { get; set; } = new(StringComparer.Ordinal);
+
+    /// <summary>Optional raw CSS appended after <see cref="Variables"/>.</summary>
+    public string? RawCss { get; set; }
 }
 
 // -- Panels (Dockable) --
@@ -131,6 +185,12 @@ public sealed class PanelDescriptor
     /// A generic catch-all page in the host resolves the route to this panel at runtime.
     /// </summary>
     public string? Route { get; set; }
+
+    /// <summary>
+    /// When set, the panel is filtered out of the rendered shell unless the current
+    /// <see cref="IShellAuthContext"/> reports a matching role (or "*" for any authenticated user).
+    /// </summary>
+    public string? RequiresRole { get; set; }
 }
 
 // -- Content-level Descriptors --

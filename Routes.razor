@@ -1,9 +1,13 @@
+@using BlueprintShell.Shell
+@using BlueprintShell.Shared
+@inject ShellRegistry Registry
+
 <Router AppAssembly="@typeof(EditorServerHost).Assembly">
     <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(Shared.ShellLayout)"/>
+        <RouteView RouteData="@routeData" DefaultLayout="@LayoutFor(routeData)"/>
     </Found>
     <NotFound>
-        <LayoutView Layout="@typeof(Shared.ShellLayout)">
+        <LayoutView Layout="@typeof(ShellLayout)">
             <div class="flex flex-col items-center justify-center min-h-[400px] gap-4">
                 <h1 class="text-4xl font-bold">404</h1>
                 <p class="text-muted-foreground">Sorry, there's nothing at this address.</p>
@@ -12,3 +16,29 @@
         </LayoutView>
     </NotFound>
 </Router>
+
+@code {
+    private Type LayoutFor(RouteData routeData)
+    {
+        // If the catch-all Index.razor resolved a reader-page, use that page's preferred layout.
+        if (routeData.PageType == typeof(BlueprintShell.Pages.Index)
+            && routeData.RouteValues.TryGetValue("Slug", out var slugObj))
+        {
+            var route = string.IsNullOrEmpty(slugObj as string) ? "/" : "/" + slugObj;
+            var reader = Registry.Current.ReaderPages
+                .FirstOrDefault(r => RouteMatcher.Match(r.Route, route, out _));
+            if (reader is not null)
+            {
+                if (reader.Layout is not null) return reader.Layout;
+                return reader.Chrome switch
+                {
+                    ShellChromeMode.Hidden => typeof(ReaderLayout),
+                    ShellChromeMode.Minimal => typeof(MinimalLayout),
+                    _ => typeof(ShellLayout),
+                };
+            }
+        }
+
+        return typeof(ShellLayout);
+    }
+}

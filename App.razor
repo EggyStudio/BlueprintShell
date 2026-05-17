@@ -2,6 +2,12 @@
 @using Microsoft.AspNetCore.Components.Web
 @inject BlueprintShellOptions Options
 
+@{
+    var basePath = string.IsNullOrEmpty(Options.StaticAssetsBasePath)
+        ? "_content/BlueprintShell"
+        : Options.StaticAssetsBasePath.Trim('/');
+}
+
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
@@ -10,11 +16,11 @@
     <base href="/"/>
     <title>@Options.AppTitle</title>
     <!-- Theme CSS variables (OKLCH colour space) - must load first -->
-    <link href="styles/themes/default.css" rel="stylesheet"/>
+    <link href="@($"{basePath}/styles/themes/default.css")" rel="stylesheet"/>
     <!-- BlazorBlueprint component styles -->
     <link href="_content/BlazorBlueprint.Components/blazorblueprint.css" rel="stylesheet"/>
     <!-- App Tailwind utilities -->
-    <link href="css/app.css" rel="stylesheet"/>
+    <link href="@($"{basePath}/css/app.css")" rel="stylesheet"/>
     <HeadOutlet/>
 </head>
 <body class="font-sans antialiased">

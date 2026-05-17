@@ -1,91 +1,117 @@
 @inherits LayoutComponentBase
 @namespace BlueprintShell.Shared
 @using BlueprintShell.Shell
+@using Microsoft.AspNetCore.Http
 
-<div class="relative min-h-screen flex flex-col bg-background text-foreground">
+@{
+    var chrome = ResolveChrome();
+}
 
-    @* Inject custom CSS snippets from shell scripts *@
-    @if (Descriptor.CustomCss.Count > 0)
-    {
-        <style>
-            @foreach (var css in Descriptor.CustomCss)
-            {
-                @((MarkupString)css)
-            }
-        </style>
-    }
+@if (chrome == ShellChromeMode.Hidden)
+{
+    <div class="relative min-h-screen flex flex-col bg-background text-foreground">
+        <ShellThemeStyle />
+        <main class="flex-1 overflow-auto">@Body</main>
+    </div>
+}
+else
+{
+    <div class="relative min-h-screen flex flex-col bg-background text-foreground"
+         data-chrome="@chrome.ToString().ToLowerInvariant()"
+         style="--bp-mobile-bp:@(Options.MobileBreakpointPx)px;">
 
-    @* ── Header ──────────────────────────────────────────────────────────── *@
-    <header class="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div class="flex h-14 items-center gap-4 px-4">
+        <ShellThemeStyle />
 
-            @* Logo / app title *@
-            <a href="/" class="flex items-center gap-2 shrink-0">
-                <LucideIcon Name="layout-dashboard" Size="18" class="text-primary" />
-                <span class="text-sm font-semibold tracking-tight">@Options.AppTitle</span>
-            </a>
+        @* Inject custom CSS snippets from shell scripts *@
+        @if (Descriptor.CustomCss.Count > 0)
+        {
+            <style>
+                @foreach (var css in Descriptor.CustomCss)
+                {
+                    @((MarkupString)css)
+                }
+            </style>
+        }
 
-            @* Nav links - panels that expose a route *@
-            @{
-                var navPanels = Descriptor.Panels
-                    .Where(p => p.Visible && !string.IsNullOrEmpty(p.Route))
-                    .OrderBy(p => p.TabOrder)
-                    .ToList();
-            }
-            @if (navPanels.Count > 0)
-            {
-                <nav class="flex items-center gap-0.5">
-                    @foreach (var panel in navPanels)
+        @* ── Header ──────────────────────────────────────────────────────────── *@
+        <header class="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div class="flex h-14 items-center gap-4 px-4">
+
+                @* Logo / app title *@
+                <a href="/" class="flex items-center gap-2 shrink-0">
+                    <LucideIcon Name="layout-dashboard" Size="18" class="text-primary" />
+                    <span class="text-sm font-semibold tracking-tight">@Options.AppTitle</span>
+                </a>
+
+                @* Nav links - panels that expose a route, filtered by auth role *@
+                @{
+                    var navPanels = Descriptor.Panels
+                        .Where(p => p.Visible
+                                    && !string.IsNullOrEmpty(p.Route)
+                                    && ShellAuthGate.Allow(Auth, p.RequiresRole))
+                        .OrderBy(p => p.TabOrder)
+                        .ToList();
+                }
+                @if (navPanels.Count > 0)
+                {
+                    <nav class="hidden md:flex items-center gap-0.5">
+                        @foreach (var panel in navPanels)
+                        {
+                            <NavLink href="@panel.Route"
+                                     class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors"
+                                     ActiveClass="bg-accent text-foreground font-medium">
+                                @if (!string.IsNullOrEmpty(panel.Icon))
+                                {
+                                    <LucideIcon Name="@panel.Icon" Size="14" />
+                                }
+                                @panel.Title
+                            </NavLink>
+                        }
+                    </nav>
+                }
+
+                @* Consumer-supplied header slots *@
+                @foreach (var slot in Registry.HeaderSlots)
+                {
+                    @slot
+                }
+
+                @* Top-zone panels (only in Full chrome) *@
+                @if (chrome == ShellChromeMode.Full)
+                {
+                    var topPanels = Descriptor.Panels
+                        .Where(p => p.Visible
+                                    && p.DefaultZone == DockZone.Top
+                                    && ShellAuthGate.Allow(Auth, p.RequiresRole))
+                        .OrderBy(p => p.TabOrder)
+                        .ToList();
+
+                    foreach (var panel in topPanels)
                     {
-                        <NavLink href="@panel.Route"
-                                 class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors"
-                                 ActiveClass="bg-accent text-foreground font-medium">
-                            @if (!string.IsNullOrEmpty(panel.Icon))
-                            {
-                                <LucideIcon Name="@panel.Icon" Size="14" />
-                            }
-                            @panel.Title
-                        </NavLink>
+                        if (panel.ComponentType is not null)
+                        {
+                            <DynamicComponent Type="panel.ComponentType" />
+                        }
+                        else if (panel.Content is { Count: > 0 })
+                        {
+                            <ElementRenderer Elements="panel.Content" />
+                        }
                     }
-                </nav>
-            }
-
-            <div class="flex-1" />
-
-            @* Top-zone panels (menubars, toolbars, status chips, etc.) *@
-            @{
-                var topPanels = Descriptor.Panels
-                    .Where(p => p.Visible && p.DefaultZone == DockZone.Top)
-                    .OrderBy(p => p.TabOrder)
-                    .ToList();
-            }
-            @foreach (var panel in topPanels)
-            {
-                @if (panel.ComponentType is not null)
-                {
-                    <DynamicComponent Type="panel.ComponentType" />
                 }
-                else if (panel.Content is { Count: > 0 })
-                {
-                    <ElementRenderer Elements="panel.Content" />
-                }
-            }
 
-            @* Dark-mode toggle *@
-            <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon"
-                      @onclick="ToggleDarkMode" title="Toggle dark mode">
-                <LucideIcon Name="@(_isDark ? "sun" : "moon")" Size="18" />
-            </BbButton>
-        </div>
-    </header>
+                <div class="flex-1" />
 
-    @* ── Page content ─────────────────────────────────────────────────────── *@
-    <main class="flex-1 flex flex-col min-h-0 overflow-hidden">
-        @Body
-    </main>
-</div>
+                @* Dark-mode toggle *@
+                <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon"
+                          @onclick="ToggleDarkMode" title="Toggle dark mode">
+                    <LucideIcon Name="@(_isDark ? "sun" : "moon")" Size="18" />
+                </BbButton>
+            </div>
+        </header>
 
-@* Global providers required by BlazorBlueprint dialogs/toasts *@
-<BbToastProvider Position="ToastPosition.BottomRight" />
-<BbDialogProvider />
-<BbPortalHost />
+        @* ── Page content ─────────────────────────────────────────────────────── *@
+        <main class="flex-1 flex flex-col min-h-0 overflow-hidden">
+            @Body
+        </main>
+    </div>
+}

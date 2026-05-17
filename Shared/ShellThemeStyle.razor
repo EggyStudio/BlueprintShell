@@ -1,0 +1,44 @@
+@namespace BlueprintShell.Shared
+@using BlueprintShell.Shell
+@implements IDisposable
+
+@if (!string.IsNullOrEmpty(_css))
+{
+    <style id="bp-active-theme">
+        @((MarkupString)_css)
+    </style>
+}
+
+@code {
+    [Inject] private ShellRegistry Registry { get; set; } = null!;
+    [Inject] private BlueprintShellOptions Options { get; set; } = null!;
+
+    private string? _css;
+
+    protected override void OnInitialized()
+    {
+        Registry.Changed += OnChanged;
+        Recompute();
+    }
+
+    private void OnChanged() => InvokeAsync(() => { Recompute(); StateHasChanged(); });
+
+    private void Recompute()
+    {
+        var name = Registry.ActiveTheme ?? Options.ActiveTheme;
+        if (string.IsNullOrEmpty(name) || !Registry.Current.Themes.TryGetValue(name, out var preset))
+        {
+            _css = null;
+            return;
+        }
+
+        var sb = new System.Text.StringBuilder();
+        sb.Append(":root{");
+        foreach (var (k, v) in preset.Variables) sb.Append(k).Append(':').Append(v).Append(';');
+        sb.Append('}');
+        if (!string.IsNullOrEmpty(preset.RawCss)) sb.Append(preset.RawCss);
+        _css = sb.ToString();
+    }
+
+    public void Dispose() => Registry.Changed -= OnChanged;
+}

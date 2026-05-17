@@ -1,30 +1,51 @@
-# BlueprintShell
+<div align="center">
+  <img src="https://raw.githubusercontent.com/EggyStudio/BlueprintShell/main/.github/assets/logo.png" alt="logo" />
+</div>
 
-![logo](https://raw.githubusercontent.com/EggyStudio/BlueprintShell/main/.github/assets/logo.png)
+<h1 align="center" style="text-align:center">BlueprintShell</h1>
+<h4 align="center" style="text-align:center">
+Embeddable editor shell built on BlazorBlueprint.<br>Dockable panels, reader pages, theming, auth-aware chrome, and PWA - all from a single NuGet.
+</h4>
+<p align="center" style="text-align:center">
+Drop BlueprintShell into any .NET app and get a themed UI on a dedicated port, or mount it inside your existing ASP.NET Core pipeline.
+<br><em>
+Designed for engine editors, internal tools, and content sites that mix a public reader with an authenticated editor.
+</em></p>
 
-**BlueprintShell** is an embeddable editor shell built on [BlazorBlueprint](https://blazorblueprint.com). Add it to any .NET application and get a fully themed, dockable editor UI - panels, toolbars, dark-mode, hot-reload - served on a configurable port from your own process.
+<p align="center" style="text-align:center">
+  <img alt="Platform" src="https://img.shields.io/badge/Platform-.NET%2010-512BD4">
+  <img alt="UI" src="https://img.shields.io/badge/UI-Blazor%20Server-5C2D91">
+  <img alt="Components" src="https://img.shields.io/badge/Components-BlazorBlueprint-0EA5E9">
+  <img alt="Realtime" src="https://img.shields.io/badge/Realtime-SignalR-FF6F61">
+  <a href="LICENSE"><img alt="License: MPL 2.0" src="https://img.shields.io/badge/License-MPL%202.0-blue.svg"></a>
+  <a href="https://github.com/EggyStudio/BlueprintShell"><img alt="GitHub" src="https://img.shields.io/badge/GitHub-EggyStudio%2FBlueprintShell-181717"></a>
+</p>
 
-> Packages are published to [GitHub Packages](https://github.com/EggyStudio/BlueprintShell/packages).
-
----
-
-## Installation
-
-Add the GitHub Packages feed to your `NuGet.config` (or `~/.nuget/NuGet/NuGet.Config`):
-
-```xml
-<packageSources>
-  <add key="EggyStudio" value="https://nuget.pkg.github.com/EggyStudio/index.json" />
-</packageSources>
-```
-
-Then add the package:
+## Quick Installation
 
 ```bash
 dotnet add package BlueprintShell
 ```
 
----
+<!-- TOC -->
+
+- [Quick Installation](#quick-installation)
+- [Usage](#usage)
+- [Configuration - `BlueprintShellOptions`](#configuration---blueprintshelloptions)
+- [Writing panels](#writing-panels)
+- [Writing shell builders](#writing-shell-builders)
+- [Reader pages](#reader-pages)
+- [Auth-aware chrome](#auth-aware-chrome)
+- [DI-aware chrome resolution](#di-aware-chrome-resolution)
+- [Header slots](#header-slots)
+- [Theme presets](#theme-presets)
+- [PWA](#pwa)
+- [Diagnostics](#diagnostics)
+- [Multiple shell sources](#multiple-shell-sources)
+- [Dialogs / popovers (`BbPortalHost`)](#dialogs--popovers-bbportalhost)
+- [CSS / theming](#css--theming)
+- [Project Structure](#project-structure)
+- [License](#license)
 
 ## Usage
 
@@ -67,8 +88,6 @@ app.MapBlueprintShell();   // maps /shell-hub SignalR endpoint
 
 Then add the shell's `App`, `Routes`, and `ShellLayout` into your Razor routing as needed.
 
----
-
 ## Configuration - `BlueprintShellOptions`
 
 | Property | Type | Default | Description |
@@ -99,8 +118,6 @@ builder.Services.AddBlueprintShell(o =>
 });
 ```
 
----
-
 ## Writing panels
 
 Decorate any Blazor component with `[EditorPanel]` to register it as a dockable panel. The attribute is discovered at startup by `StaticShellLoader` via reflection.
@@ -125,15 +142,13 @@ Decorate any Blazor component with `[EditorPanel]` to register it as a dockable 
 | `title` | Display name in the panel header / tab. |
 | `zone` | Default dock position: `Top`, `Left`, `Right`, `Bottom`, `Center`, `Float`. |
 | `Icon` | Optional Lucide icon name shown in the header. |
-| `Route` | When set, a nav-link to this panel appears in the shell header **and** the catch-all router serves the panel at the given URL. Route parameters (e.g. `"/edit/article/{Identifier}"`) are forwarded to matching `[Parameter]` properties — same convention as `@page`. |
+| `Route` | When set, a nav-link to this panel appears in the shell header **and** the catch-all router serves the panel at the given URL. Route parameters (e.g. `"/edit/article/{Identifier}"`) are forwarded to matching `[Parameter]` properties - same convention as `@page`. |
 | `TabGroup` | Groups this panel as a tab inside another panel. |
 | `TabOrder` | Sort order within a tab group. |
-| `InitialSize` | Fraction (0–1) of the parent dock area. Default `0.25`. |
+| `InitialSize` | Fraction (0-1) of the parent dock area. Default `0.25`. |
 | `Closeable` | Whether the user can close the panel. Default `true`. |
 | `Visible` | Whether the panel starts visible. Default `true`. |
 | `RequiresRole` | Filters the panel out for requests where `IShellAuthContext.Roles` doesn't contain the value (`"*"` means any authenticated user). |
-
----
 
 ## Writing shell builders
 
@@ -165,38 +180,9 @@ public class MyShell : IEditorShellBuilder
 
 Multiple builders coexist: `Order` controls execution order; higher-precedence sources (dynamic hot-reload) override lower ones on panel-id collisions.
 
----
-
-## Multiple shell sources
-
-`ShellRegistry` supports multiple named sources that are merged at runtime. This lets an engine contribute a static source at startup and a hot-reload compiler contribute a dynamic source later:
-
-```csharp
-var registry = new ShellRegistry();
-
-// Static source - built-in panels:
-registry.RegisterSource("static", new ShellSource
-{
-    Builders   = new[] { new MyShell() },
-    Precedence = 0,
-});
-
-// Dynamic source - runtime-compiled panels override static ones on id collision:
-registry.RegisterSource("dynamic", new ShellSource
-{
-    PanelComponents = discoveredPanels,
-    Precedence      = 100,
-});
-
-var shell = await EditorServerHost.StartAsync(registry: registry);
-```
-
----
-
 ## Reader pages
 
-Reader pages are routed components that bypass the dock layout - useful for full-bleed
-content (articles, marketing pages) hosted alongside an editor.
+Reader pages are routed components that bypass the dock layout - useful for full-bleed content (articles, marketing pages) hosted alongside an editor.
 
 ```razor
 @* Article.razor *@
@@ -208,18 +194,11 @@ content (articles, marketing pages) hosted alongside an editor.
 }
 ```
 
-The shell resolves the route via a catch-all router and forwards segments as
-`[Parameter]` properties on the component (same convention as `@page`).
+The shell resolves the route via a catch-all router and forwards segments as `[Parameter]` properties on the component (same convention as `@page`).
 
 ### Incremental adoption (`UseBlazorRouter = true`)
 
-If you already have a catalog of `@page`-routed components and don't want to
-migrate them wholesale, set `UseBlazorRouter = true`. The shell records the
-entry in `ShellRegistry` (so it shows up in diagnostics and participates in
-role tracking) but the catch-all router skips it — your existing Blazor
-`Router` continues to handle the URL. `RequiresRole` becomes advisory in this
-mode: the shell can't gate a request it doesn't render, so enforce the role
-check inside the component or via your own routing middleware.
+If you already have a catalog of `@page`-routed components and don't want to migrate them wholesale, set `UseBlazorRouter = true`. The shell records the entry in `ShellRegistry` (so it shows up in diagnostics and participates in role tracking) but the catch-all router skips it - your existing Blazor `Router` continues to handle the URL. `RequiresRole` becomes advisory in this mode: the shell can't gate a request it doesn't render, so enforce the role check inside the component or via your own routing middleware.
 
 ```razor
 @page "/wiki/{Identifier}"
@@ -228,9 +207,7 @@ check inside the component or via your own routing middleware.
 
 ## Auth-aware chrome
 
-Implement `IShellAuthContext` and the shell will filter `[EditorPanel(..., RequiresRole = "...")]`
-panels and `[ReaderPage(..., RequiresRole = "...")]` pages automatically. Use `"*"` to require
-any authenticated user.
+Implement `IShellAuthContext` and the shell will filter `[EditorPanel(..., RequiresRole = "...")]` panels and `[ReaderPage(..., RequiresRole = "...")]` pages automatically. Use `"*"` to require any authenticated user.
 
 ```csharp
 public sealed class MyAuthContext : IShellAuthContext
@@ -241,6 +218,18 @@ public sealed class MyAuthContext : IShellAuthContext
 }
 
 builder.Services.AddScoped<IShellAuthContext, MyAuthContext>();
+```
+
+## DI-aware chrome resolution
+
+`ChromeFor` runs without access to scoped services. When you need to resolve `IShellAuthContext` (or anything else from DI) to pick chrome, use `ChromeForServices` instead - it receives the scoped `IServiceProvider` and is evaluated before `ChromeFor`.
+
+```csharp
+o.ChromeForServices = (ctx, sp) =>
+{
+    var auth = sp.GetRequiredService<IShellAuthContext>();
+    return auth.IsAuthenticated ? ShellChromeMode.Full : ShellChromeMode.Hidden;
+};
 ```
 
 ## Header slots
@@ -271,8 +260,7 @@ registry.RegisterTheme("reader", new ThemePreset
 registry.SetActiveTheme("reader");
 ```
 
-The active preset is rendered as `<style id="bp-active-theme">` and replaced when
-`SetActiveTheme` is called.
+The active preset is rendered as `<style id="bp-active-theme">` and replaced when `SetActiveTheme` is called.
 
 ## PWA
 
@@ -286,53 +274,49 @@ app.MapBlueprintShellPwa(new BlueprintShellPwaOptions
 });
 ```
 
-Serves a manifest at `/manifest.webmanifest` and a service worker at `/sw.js`,
-precaching the shell's own CSS and any URLs you add via `ExtraCacheUrls`.
+Serves a manifest at `/manifest.webmanifest` and a service worker at `/sw.js`, precaching the shell's own CSS and any URLs you add via `ExtraCacheUrls`.
 
-The generated service worker skips `/_blazor`, `/_framework`, and the
-configured SignalR hub path by default (caching them breaks Blazor Server
-reconnects after deploy). Add more prefixes via
-`BlueprintShellPwaOptions.ExcludePathPrefixes`.
+The generated service worker skips `/_blazor`, `/_framework`, and the configured SignalR hub path by default (caching them breaks Blazor Server reconnects after deploy). Add more prefixes via `BlueprintShellPwaOptions.ExcludePathPrefixes`.
 
-To register the service worker on the client, either drop the helper
-component into your layout / `App.razor`:
+To register the service worker on the client, either drop the helper component into your layout / `App.razor`:
 
 ```razor
 <BlueprintShellPwaBootstrap />
 ```
 
-…or set `RenderRegistrationScript = false` and emit the
-`navigator.serviceWorker.register('/sw.js')` call yourself.
+...or set `RenderRegistrationScript = false` and emit the `navigator.serviceWorker.register('/sw.js')` call yourself.
 
-## DI-aware chrome resolution
+## Diagnostics
 
-`ChromeFor` runs without access to scoped services. When you need to resolve
-`IShellAuthContext` (or anything else from DI) to pick chrome, use
-`ChromeForServices` instead — it receives the scoped `IServiceProvider` and is
-evaluated before `ChromeFor`.
+Set `o.EnableDiagnostics = true` and `GET /_shell/diagnostics` returns a JSON dump of panels, reader pages, themes, and loaded assemblies - useful when something doesn't render and you want to know whether it was discovered.
+
+## Multiple shell sources
+
+`ShellRegistry` supports multiple named sources that are merged at runtime. This lets an engine contribute a static source at startup and a hot-reload compiler contribute a dynamic source later:
 
 ```csharp
-o.ChromeForServices = (ctx, sp) =>
+var registry = new ShellRegistry();
+
+// Static source - built-in panels:
+registry.RegisterSource("static", new ShellSource
 {
-    var auth = sp.GetRequiredService<IShellAuthContext>();
-    return auth.IsAuthenticated ? ShellChromeMode.Full : ShellChromeMode.Hidden;
-};
+    Builders   = new[] { new MyShell() },
+    Precedence = 0,
+});
+
+// Dynamic source - runtime-compiled panels override static ones on id collision:
+registry.RegisterSource("dynamic", new ShellSource
+{
+    PanelComponents = discoveredPanels,
+    Precedence      = 100,
+});
+
+var shell = await EditorServerHost.StartAsync(registry: registry);
 ```
 
 ## Dialogs / popovers (`BbPortalHost`)
 
-BlazorBlueprint renders dialogs, popovers, tooltips, and toasts into a portal
-host — your layout must include `<BbPortalHost />` (from
-`BlazorBlueprint.Primitives.Services`, **not** `BlazorBlueprint.Primitives`)
-for those primitives to appear. All three of the shell's built-in layouts
-(`ShellLayout`, `MinimalLayout`, `ReaderLayout`) already include it; consumers
-writing their own layout need to add it themselves.
-
-## Diagnostics
-
-Set `o.EnableDiagnostics = true` and `GET /_shell/diagnostics` returns a JSON dump
-of panels, reader pages, themes, and loaded assemblies - useful when something
-doesn't render and you want to know whether it was discovered.
+BlazorBlueprint renders dialogs, popovers, tooltips, and toasts into a portal host - your layout must include `<BbPortalHost />` (from `BlazorBlueprint.Primitives.Services`, **not** `BlazorBlueprint.Primitives`) for those primitives to appear. All three of the shell's built-in layouts (`ShellLayout`, `MinimalLayout`, `ReaderLayout`) already include it; consumers writing their own layout need to add it themselves.
 
 ## CSS / theming
 
@@ -349,8 +333,53 @@ registry.RegisterSource("my-theme", new ShellSource
 });
 ```
 
----
+## Project Structure
+
+```
+BlueprintShell/
+├── BlueprintShell.csproj           # NuGet metadata + content packaging
+├── BlueprintShellOptions.cs        # Host-level options (chrome, mobile, scan, diagnostics)
+├── BlueprintShellPwaOptions.cs     # PWA manifest + service-worker options
+├── BlueprintShellExtensions.cs     # AddBlueprintShell, MapBlueprintShell, MapBlueprintShellPwa
+├── Program.cs                      # EditorServerHost - standalone Kestrel runner
+├── App.razor                       # Root HTML document (theme, BB CSS, scripts)
+├── Routes.razor                    # Router; selects layout per reader-page
+├── _Imports.razor                  # In-project usings
+├── Hubs/
+│   └── ShellHub.cs                 # SignalR hub + ShellState
+├── Pages/
+│   └── Index.razor                 # Catch-all - resolves reader pages & panel routes
+├── Shared/
+│   ├── ShellLayout.razor(.cs)      # Full chrome (dock + header + nav)
+│   ├── MinimalLayout.razor         # Header-only chrome
+│   ├── ReaderLayout.razor          # No chrome - just shell services
+│   ├── ShellDockLayout.razor       # Dock zones with mobile breakpoint behaviour
+│   ├── ShellThemeStyle.razor       # Renders active ThemePreset as <style>
+│   ├── BlueprintShellPwaBootstrap.razor # Emits the SW registration <script> tag
+│   ├── DockPanel.razor             # Panel chrome (title bar, close button)
+│   ├── DockPanelGroup.razor        # Tab-group container
+│   └── ElementRenderer.razor       # Maps Element tree to BlazorBlueprint components
+├── Shell/
+│   ├── Attributes.cs               # [EditorShell], [EditorPanel], [ReaderPage]
+│   ├── Descriptors.cs              # Panel, ReaderPage, Theme, Menubar descriptors
+│   ├── Elements.cs                 # Element + IContentBuilder API
+│   ├── ShellRegistry.cs            # Merge of sources, themes, header slots
+│   ├── ShellSource.cs              # One contribution (builders, panels, readers, css, themes)
+│   ├── StaticShellLoader.cs        # Reflection discovery (respects ScanAssemblies)
+│   ├── GeneratedShellRegistrationAttribute.cs # Source-generator hook
+│   ├── IShellAuthContext.cs        # Per-request auth + RequiresRole gate
+│   ├── RouteMatcher.cs             # Template matcher for catch-all routes
+│   ├── Builders/                   # ShellBuilder, PanelBuilder, ContentBuilder, CssBuilder
+│   └── Helper/                     # Icon helpers, variant maps
+├── wwwroot/
+│   ├── css/app.css                 # Tailwind output
+│   ├── styles/themes/default.css   # OKLCH variable defaults
+│   └── images/
+├── contentFiles/any/any/_Imports.razor # Drop-in usings shipped to consumers
+├── LICENSE                         # MPL 2.0
+└── README.md
+```
 
 ## License
 
-[MPL 2.0](LICENSE)
+This project is licensed under the **Mozilla Public License 2.0** - see the [LICENSE](LICENSE) file for details.

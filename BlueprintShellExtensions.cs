@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 
 namespace BlueprintShell;
 
@@ -53,7 +54,39 @@ public static class BlueprintShellExtensions
         services.AddBlazorBlueprintComponents();
         services.AddSignalR();
 
+        // Discover [EditorPanel] / [ReaderPage] / generated registrations on startup.
+        // Idempotent: StaticShellLoader's registered source id is stable per call, so a
+        // duplicate invocation (e.g. from MapBlueprintShell) just overwrites itself.
+        services.AddHostedService<StaticShellLoaderService>();
+
         return services;
+    }
+
+    /// <summary>
+    /// Hosted service that runs <see cref="StaticShellLoader.LoadInto"/> exactly once at
+    /// application start, honouring <see cref="BlueprintShellOptions.ScanAssemblies"/>.
+    /// </summary>
+    private sealed class StaticShellLoaderService : IHostedService
+    {
+        private readonly ShellRegistry _registry;
+        private readonly BlueprintShellOptions _options;
+
+        public StaticShellLoaderService(ShellRegistry registry, BlueprintShellOptions options)
+        {
+            _registry = registry;
+            _options = options;
+        }
+
+        public Task StartAsync(CancellationToken cancellationToken)
+        {
+            var assemblies = _options.ScanAssemblies.Count > 0
+                ? _options.ScanAssemblies.ToArray()
+                : null;
+            StaticShellLoader.LoadInto(_registry, assemblies);
+            return Task.CompletedTask;
+        }
+
+        public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     }
 
     /// <summary>
@@ -109,6 +142,13 @@ public static class BlueprintShellExtensions
         return app;
     }
 
+    private static readonly JsonSerializerOptions DiagnosticsJsonOptions = new()
+    {
+        WriteIndented = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        DictionaryKeyPolicy = JsonNamingPolicy.CamelCase,
+    };
+
     private static void MapDiagnostics(WebApplication app)
     {
         app.MapGet("/_shell/diagnostics", (ShellRegistry registry) =>
@@ -121,15 +161,24 @@ public static class BlueprintShellExtensions
                 themes = snapshot.Themes.Keys.ToArray(),
                 panels = snapshot.Panels.Select(p => new
                 {
-                    p.Id, p.Title, zone = p.DefaultZone.ToString(),
-                    p.Route, p.RequiresRole, p.Visible, p.Closeable,
+                    id = p.Id,
+                    title = p.Title,
+                    zone = p.DefaultZone.ToString(),
+                    route = p.Route,
+                    requiresRole = p.RequiresRole,
+                    visible = p.Visible,
+                    closeable = p.Closeable,
                     component = p.ComponentType?.FullName,
                     widget = string.IsNullOrEmpty(p.WidgetKey) ? null : p.WidgetKey,
                 }),
                 readerPages = snapshot.ReaderPages.Select(r => new
                 {
-                    r.Id, r.Route, r.Title, r.RequiresRole,
+                    id = r.Id,
+                    route = r.Route,
+                    title = r.Title,
+                    requiresRole = r.RequiresRole,
                     chrome = r.Chrome?.ToString(),
+                    useBlazorRouter = r.UseBlazorRouter,
                     component = r.ComponentType.FullName,
                 }),
                 assemblies = AppDomain.CurrentDomain.GetAssemblies()
@@ -139,7 +188,7 @@ public static class BlueprintShellExtensions
                     .ToArray(),
             };
 
-            return Results.Json(payload, new JsonSerializerOptions { WriteIndented = true });
+            return Results.Json(payload, DiagnosticsJsonOptions);
         });
     }
 

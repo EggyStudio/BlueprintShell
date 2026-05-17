@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Http;
 using Microsoft.JSInterop;
 
-namespace BlueprintShell.Shared;
+namespace BlueprintShell.Shared.Layouts;
 
 /// <summary>
 /// Layout component that drives the shell chrome (header, nav, dark-mode).

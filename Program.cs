@@ -91,14 +91,28 @@ public static class EditorServerHost
 
         if (options.EnableDiagnostics)
         {
+            var jsonOptions = new System.Text.Json.JsonSerializerOptions
+            {
+                WriteIndented = true,
+                PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+                DictionaryKeyPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+            };
             app.MapGet("/_shell/diagnostics", (ShellRegistry r) => Results.Json(new
             {
                 version = r.Version,
                 activeTheme = r.ActiveTheme,
                 themes = r.Current.Themes.Keys,
-                panels = r.Current.Panels.Select(p => new { p.Id, p.Title, zone = p.DefaultZone.ToString(), p.Route, p.RequiresRole }),
-                readerPages = r.Current.ReaderPages.Select(rp => new { rp.Id, rp.Route, rp.Title, rp.RequiresRole }),
-            }));
+                panels = r.Current.Panels.Select(p => new
+                {
+                    id = p.Id, title = p.Title, zone = p.DefaultZone.ToString(),
+                    route = p.Route, requiresRole = p.RequiresRole,
+                }),
+                readerPages = r.Current.ReaderPages.Select(rp => new
+                {
+                    id = rp.Id, route = rp.Route, title = rp.Title, requiresRole = rp.RequiresRole,
+                    useBlazorRouter = rp.UseBlazorRouter,
+                }),
+            }, jsonOptions));
         }
 
         await app.StartAsync();

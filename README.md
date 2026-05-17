@@ -288,7 +288,7 @@ To register the service worker on the client, either drop the helper component i
 
 ## Diagnostics
 
-Set `o.EnableDiagnostics = true` and `GET /_shell/diagnostics` returns a JSON dump of panels, reader pages, themes, and loaded assemblies - useful when something doesn't render and you want to know whether it was discovered.
+Set `o.EnableDiagnostics = true` and `GET /_shell/diagnostics` returns a JSON dump of panels, reader pages, themes, and loaded assemblies - useful when something doesn't render and you want to know whether it was discovered. All fields are camelCase.
 
 ## Multiple shell sources
 
@@ -316,7 +316,9 @@ var shell = await EditorServerHost.StartAsync(registry: registry);
 
 ## Dialogs / popovers (`BbPortalHost`)
 
-BlazorBlueprint renders dialogs, popovers, tooltips, and toasts into a portal host - your layout must include `<BbPortalHost />` (from `BlazorBlueprint.Primitives.Services`, **not** `BlazorBlueprint.Primitives`) for those primitives to appear. All three of the shell's built-in layouts (`ShellLayout`, `MinimalLayout`, `ReaderLayout`) already include it; consumers writing their own layout need to add it themselves.
+BlazorBlueprint renders dialogs, popovers, tooltips, and toasts into a portal host - your layout must include `<BbPortalHost />` (from `BlazorBlueprint.Primitives.Services`, **not** `BlazorBlueprint.Primitives`) for those primitives to appear. All three of the shell's built-in layouts (`ShellLayout`, `MinimalLayout`, `ReaderLayout`, in `BlueprintShell.Shared.Layouts`) already include it; consumers writing their own layout need to add it themselves.
+
+> The built-in layouts live in `BlueprintShell.Shared.Layouts` so importing `BlueprintShell.Shared` to pick up helpers like `BlueprintShellPwaBootstrap` doesn't pull in names that clash with consumer-defined `ReaderLayout` / `MinimalLayout` classes.
 
 ## CSS / theming
 
@@ -349,10 +351,11 @@ BlueprintShell/
 │   └── ShellHub.cs                 # SignalR hub + ShellState
 ├── Pages/
 │   └── Index.razor                 # Catch-all - resolves reader pages & panel routes
-├── Shared/
-│   ├── ShellLayout.razor(.cs)      # Full chrome (dock + header + nav)
-│   ├── MinimalLayout.razor         # Header-only chrome
-│   ├── ReaderLayout.razor          # No chrome - just shell services
+├── Shared/                         # Components in `BlueprintShell.Shared`
+│   ├── Layouts/                    # Built-in layouts (namespace `BlueprintShell.Shared.Layouts`)
+│   │   ├── ShellLayout.razor(.cs)  # Full chrome (dock + header + nav)
+│   │   ├── MinimalLayout.razor     # Header-only chrome
+│   │   └── ReaderLayout.razor      # No chrome - just shell services
 │   ├── ShellDockLayout.razor       # Dock zones with mobile breakpoint behaviour
 │   ├── ShellThemeStyle.razor       # Renders active ThemePreset as <style>
 │   ├── BlueprintShellPwaBootstrap.razor # Emits the SW registration <script> tag

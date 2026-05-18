@@ -14,13 +14,13 @@ namespace BlueprintShell;
 
 /// <summary>
 /// Extension methods for embedding BlueprintShell inside an <em>existing</em> ASP.NET Core app
-/// (as opposed to spawning a dedicated server via <see cref="EditorServerHost.StartAsync"/>).
+/// (as opposed to spawning a dedicated server via <see cref="ShellServerHost.StartAsync"/>).
 /// </summary>
 /// <example><code>
 /// // Program.cs of the host app:
 /// builder.Services.AddBlueprintShell(o =>
 /// {
-///     o.AppTitle = "My Engine Editor";
+///     o.AppTitle = "My Shell";
 ///     o.ChromeFor = ctx => ctx.Request.Path.StartsWithSegments("/edit")
 ///         ? ShellChromeMode.Full
 ///         : ShellChromeMode.Hidden;
@@ -54,7 +54,7 @@ public static class BlueprintShellExtensions
         services.AddBlazorBlueprintComponents();
         services.AddSignalR();
 
-        // Discover [EditorPanel] / [ReaderPage] / generated registrations on startup.
+        // Discover [Panel] / [ReaderPage] / generated registrations on startup.
         // Idempotent: StaticShellLoader's registered source id is stable per call, so a
         // duplicate invocation (e.g. from MapBlueprintShell) just overwrites itself.
         services.AddHostedService<StaticShellLoaderService>();

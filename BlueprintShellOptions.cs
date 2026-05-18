@@ -6,7 +6,7 @@ namespace BlueprintShell;
 /// <summary>Visual chrome level rendered around routed content.</summary>
 public enum ShellChromeMode
 {
-    /// <summary>Full editor shell: header, nav, dock zones, panel headers.</summary>
+    /// <summary>Full shell: header, nav, dock zones, panel headers.</summary>
     Full,
 
     /// <summary>Minimal chrome: header bar only, no dock splitters or panel headers.</summary>
@@ -30,8 +30,8 @@ public enum MobileBehavior
 }
 
 /// <summary>
-/// Configuration options for the BlueprintShell editor server.
-/// Pass to <see cref="EditorServerHost.StartAsync"/> or to
+/// Configuration options for the BlueprintShell server.
+/// Pass to <see cref="ShellServerHost.StartAsync"/> or to
 /// <see cref="BlueprintShellExtensions.AddBlueprintShell"/> when embedding in an existing app.
 /// </summary>
 public sealed class BlueprintShellOptions
@@ -43,7 +43,7 @@ public sealed class BlueprintShellOptions
     ///   <item><c>"http://*:5100"</c> - all interfaces on port 5100</item>
     ///   <item><c>"https://localhost:5001;http://localhost:5000"</c> - dual binding</item>
     /// </list>
-    /// Only used by <see cref="EditorServerHost.StartAsync"/>; ignored in embedded mode.
+    /// Only used by <see cref="ShellServerHost.StartAsync"/>; ignored in embedded mode.
     /// </summary>
     public string Url { get; set; } = "http://localhost:5000";
 
@@ -97,7 +97,7 @@ public sealed class BlueprintShellOptions
     public string? StaticAssetsBasePath { get; set; }
 
     /// <summary>
-    /// Assemblies scanned for <see cref="Shell.EditorShellAttribute"/>, <see cref="Shell.EditorPanelAttribute"/>,
+    /// Assemblies scanned for <see cref="Shell.ShellAttribute"/>, <see cref="Shell.PanelAttribute"/>,
     /// <see cref="Shell.ReaderPageAttribute"/>, and <see cref="Shell.GeneratedShellRegistrationAttribute"/>.
     /// When empty (default), every loaded assembly in the current <see cref="AppDomain"/> is scanned.
     /// </summary>

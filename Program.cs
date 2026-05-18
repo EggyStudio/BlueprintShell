@@ -13,18 +13,18 @@ namespace BlueprintShell;
 /// <summary>
 /// Configures and starts the BlueprintShell Blazor application on its own Kestrel server.
 /// Suitable for use from a game engine, desktop app, or any .NET host that wants an
-/// embedded editor UI on a dedicated port.
+/// embedded shell UI on a dedicated port.
 /// </summary>
 /// <example><code>
-/// var shell = await EditorServerHost.StartAsync(new BlueprintShellOptions
+/// var shell = await ShellServerHost.StartAsync(new BlueprintShellOptions
 /// {
 ///     Url      = "http://localhost:5100",
-///     AppTitle = "My Editor",
+///     AppTitle = "My Shell",
 /// });
 /// // ... later:
 /// await shell.StopAsync();
 /// </code></example>
-public static class EditorServerHost
+public static class ShellServerHost
 {
     /// <summary>
     /// Builds and starts the shell Blazor Server.
@@ -34,7 +34,7 @@ public static class EditorServerHost
     /// <param name="args">Command-line args forwarded to the web host builder.</param>
     /// <param name="registry">
     /// Optional externally-owned <see cref="ShellRegistry"/>. Pass the same instance from the
-    /// engine host to share state. A new registry is created when null.
+    /// host to share state. A new registry is created when null.
     /// </param>
     public static async Task<WebApplication> StartAsync(
         BlueprintShellOptions? options = null,
@@ -49,7 +49,7 @@ public static class EditorServerHost
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions
         {
             Args           = args ?? [],
-            ApplicationName = typeof(EditorServerHost).Assembly.GetName().Name!,
+            ApplicationName = typeof(ShellServerHost).Assembly.GetName().Name!,
         });
 
         builder.WebHost.UseUrls(options.Url);

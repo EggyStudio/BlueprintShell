@@ -14,14 +14,14 @@
         <IsPackable>true</IsPackable>
         <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
         <PackageId>BlueprintShell</PackageId>
-        <Version>0.1.6</Version>
-        <Description>Embeddable editor shell built on BlazorBlueprint. Spin up a themed, dockable editor UI on a configurable port from any .NET application.</Description>
+        <Version>0.2.0</Version>
+        <Description>Embeddable Blazor shell built on BlazorBlueprint. Spin up a themed, dockable UI on a configurable port from any .NET application.</Description>
         <Authors>EggyStudio</Authors>
         <RepositoryType>git</RepositoryType>
         <RepositoryUrl>https://github.com/EggyStudio/BlueprintShell</RepositoryUrl>
         <PackageProjectUrl>https://github.com/EggyStudio/BlueprintShell</PackageProjectUrl>
         <PackageLicenseExpression>MPL-2.0</PackageLicenseExpression>
-        <PackageTags>blazor;blueprintshell;editor;shell;blazorblueprint</PackageTags>
+        <PackageTags>blazor;blueprintshell;shell;dock;blazorblueprint</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageIcon>logo.png</PackageIcon>
         <Deterministic>true</Deterministic>

@@ -3,19 +3,19 @@ namespace BlueprintShell.Shell;
 // -- Shell Discovery --
 
 /// <summary>
-/// Marks a class implementing <see cref="IEditorShellBuilder"/> for discovery
-/// by the runtime script compiler. The builder's <c>Build()</c> method is called
-/// to produce a <see cref="ShellDescriptor"/> tree that drives the editor UI.
+/// Marks a class implementing <see cref="IShellContribution"/> for discovery
+/// by the runtime script compiler. The contribution's <c>Build()</c> method is called
+/// to produce a <see cref="ShellDescriptor"/> tree that drives the UI.
 /// </summary>
-/// <seealso cref="IEditorShellBuilder"/>
+/// <seealso cref="IShellContribution"/>
 /// <seealso cref="ShellDescriptor"/>
 [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
-public sealed class EditorShellAttribute : Attribute;
+public sealed class ShellAttribute : Attribute;
 
 // -- Blazor Panel Discovery --
 
 /// <summary>
-/// Marks a native Blazor component (<c>.razor</c> file) as an editor panel.
+/// Marks a native Blazor component (<c>.razor</c> file) as a dockable shell panel.
 /// The compiler discovers types annotated with this attribute and creates a
 /// <see cref="PanelDescriptor"/> with <see cref="PanelDescriptor.ComponentType"/>
 /// set to the component's <see cref="Type"/>, enabling <c>DynamicComponent</c> rendering.
@@ -25,7 +25,7 @@ public sealed class EditorShellAttribute : Attribute;
 /// Apply this attribute in a <c>.razor</c> file via the <c>@attribute</c> directive:
 /// </para>
 /// <code>
-/// @attribute [EditorPanel("my-panel", "My Panel", DockZone.Right)]
+/// @attribute [Panel("my-panel", "My Panel", DockZone.Right)]
 /// </code>
 /// <para>
 /// The component is compiled at runtime alongside <c>.cs</c> scripts and benefits
@@ -35,7 +35,7 @@ public sealed class EditorShellAttribute : Attribute;
 /// </remarks>
 /// <example>
 /// <code>
-/// @attribute [EditorPanel("inspector", "Inspector", DockZone.Right, Icon = "settings", Route = "/inspector")]
+/// @attribute [Panel("inspector", "Inspector", DockZone.Right, Icon = "settings", Route = "/inspector")]
 ///
 /// @inject ShellRegistry Registry
 ///
@@ -47,10 +47,10 @@ public sealed class EditorShellAttribute : Attribute;
 /// }
 /// </code>
 /// </example>
-/// <seealso cref="EditorShellAttribute"/>
+/// <seealso cref="ShellAttribute"/>
 /// <seealso cref="PanelDescriptor"/>
 [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
-public sealed class EditorPanelAttribute : Attribute
+public sealed class PanelAttribute : Attribute
 {
     /// <summary>Unique panel identifier (used for tab grouping and persistence).</summary>
     public string Id { get; }
@@ -92,11 +92,11 @@ public sealed class EditorPanelAttribute : Attribute
     /// </summary>
     public string? RequiresRole { get; set; }
 
-    /// <summary>Creates a new <see cref="EditorPanelAttribute"/> with the specified panel metadata.</summary>
+    /// <summary>Creates a new <see cref="PanelAttribute"/> with the specified panel metadata.</summary>
     /// <param name="id">Unique panel identifier.</param>
     /// <param name="title">Display title for the panel header / tab.</param>
     /// <param name="zone">Default dock zone for initial placement. Defaults to <see cref="DockZone.Center"/>.</param>
-    public EditorPanelAttribute(string id, string title, DockZone zone = DockZone.Center)
+    public PanelAttribute(string id, string title, DockZone zone = DockZone.Center)
     {
         Id = id;
         Title = title;

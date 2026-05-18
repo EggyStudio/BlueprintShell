@@ -3,7 +3,7 @@
 @using BlueprintShell.Shared.Layouts
 @inject ShellRegistry Registry
 
-<Router AppAssembly="@typeof(EditorServerHost).Assembly">
+<Router AppAssembly="@typeof(ShellServerHost).Assembly">
     <Found Context="routeData">
         <RouteView RouteData="@routeData" DefaultLayout="@LayoutFor(routeData)"/>
     </Found>

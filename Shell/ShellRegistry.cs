@@ -14,8 +14,8 @@ namespace BlueprintShell.Shell;
 /// <see cref="RemoveSource"/>. After every mutation the registry rebuilds
 /// <see cref="Current"/> by:
 /// <list type="number">
-///   <item><description>Running every <see cref="IEditorShellBuilder"/> from every source against a shared <see cref="ShellBuilder"/>, ordered by <see cref="IEditorShellBuilder.Order"/> ascending then by source <see cref="ShellSource.Precedence"/> ascending.</description></item>
-///   <item><description>Appending all <see cref="ShellSource.PanelComponents"/> as additional <see cref="PanelDescriptor"/> entries (sorted by <see cref="EditorPanelAttribute.Order"/>).</description></item>
+///   <item><description>Running every <see cref="IShellContribution"/> from every source against a shared <see cref="ShellBuilder"/>, ordered by <see cref="IShellContribution.Order"/> ascending then by source <see cref="ShellSource.Precedence"/> ascending.</description></item>
+///   <item><description>Appending all <see cref="ShellSource.PanelComponents"/> as additional <see cref="PanelDescriptor"/> entries (sorted by <see cref="PanelAttribute.Order"/>).</description></item>
 ///   <item><description>Resolving <see cref="PanelDescriptor.Id"/> collisions by keeping the entry from the source with the highest <see cref="ShellSource.Precedence"/> (dynamic overrides static).</description></item>
 ///   <item><description>Concatenating all <see cref="ShellSource.CustomCss"/> snippets in source-precedence order.</description></item>
 /// </list>
@@ -165,7 +165,7 @@ public sealed class ShellRegistry
         ArgumentNullException.ThrowIfNull(descriptor);
         var source = new ShellSource
         {
-            Builders = new IEditorShellBuilder[] { new PrebuiltDescriptorBuilder(descriptor) },
+            Builders = new IShellContribution[] { new PrebuiltDescriptorBuilder(descriptor) },
             CustomCss = descriptor.CustomCss.ToArray(),
             Precedence = 100,
         };
@@ -179,7 +179,7 @@ public sealed class ShellRegistry
         var orderedSources = sources
             .OrderBy(kv => kv.Value.Precedence)
             .ToList();
-        // Builders ordered by IEditorShellBuilder.Order, ties broken by source precedence
+        // Builders ordered by IShellContribution.Order, ties broken by source precedence
         // (low precedence first so high-precedence sources execute later and overwrite).
         var allBuilders = orderedSources
             .SelectMany(kv => kv.Value.Builders.Select(b => (Builder: b, kv.Value.Precedence)))
@@ -199,7 +199,7 @@ public sealed class ShellRegistry
         }
 
         var merged = shellBuilder.Build();
-        // Append [EditorPanel] component panels in precedence order.
+        // Append [Panel] component panels in precedence order.
         foreach (var (_, src) in orderedSources)
         {
             foreach (var (attr, type) in src.PanelComponents.OrderBy(p => p.Attr.Order))
@@ -265,8 +265,8 @@ public sealed class ShellRegistry
         return merged;
     }
 
-    /// <summary>Adapter that re-exposes a pre-built <see cref="ShellDescriptor"/> as an <see cref="IEditorShellBuilder"/>.</summary>
-    private sealed class PrebuiltDescriptorBuilder(ShellDescriptor descriptor) : IEditorShellBuilder
+    /// <summary>Adapter that re-exposes a pre-built <see cref="ShellDescriptor"/> as an <see cref="IShellContribution"/>.</summary>
+    private sealed class PrebuiltDescriptorBuilder(ShellDescriptor descriptor) : IShellContribution
     {
         public int Order => 0;
 

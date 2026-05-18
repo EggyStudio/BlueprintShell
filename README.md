@@ -4,12 +4,12 @@
 
 <h1 align="center" style="text-align:center">BlueprintShell</h1>
 <h4 align="center" style="text-align:center">
-Embeddable editor shell built on BlazorBlueprint.<br>Dockable panels, reader pages, theming, auth-aware chrome, and PWA - all from a single NuGet.
+Embeddable Blazor shell built on BlazorBlueprint.<br>Dockable panels, reader pages, theming, auth-aware chrome, and PWA - all from a single NuGet.
 </h4>
 <p align="center" style="text-align:center">
 Drop BlueprintShell into any .NET app and get a themed UI on a dedicated port, or mount it inside your existing ASP.NET Core pipeline.
 <br><em>
-Designed for engine editors, internal tools, and content sites that mix a public reader with an authenticated editor.
+Designed for engine tooling, internal tools, and content sites that mix a public reader with an authenticated contributor mode.
 </em></p>
 
 <p align="center" style="text-align:center">
@@ -59,10 +59,10 @@ Spin up a separate Kestrel server inside your existing process. The shell runs i
 using BlueprintShell;
 
 // Start the shell server (non-blocking).
-var shell = await EditorServerHost.StartAsync(new BlueprintShellOptions
+var shell = await ShellServerHost.StartAsync(new BlueprintShellOptions
 {
     Url      = "http://localhost:5100",
-    AppTitle = "My Engine Editor",
+    AppTitle = "My Shell",
 });
 
 // ... run your loop ...
@@ -81,7 +81,7 @@ If your host is already an ASP.NET Core app, register the shell services and map
 // Program.cs
 builder.Services.AddBlueprintShell(o =>
 {
-    o.AppTitle = "My Editor";
+    o.AppTitle = "My Shell";
 });
 
 // After builder.Build():
@@ -103,12 +103,12 @@ Then add the shell's `App`, `Routes`, and `ShellLayout` into your Razor routing 
 | `MobileBreakpointPx` | `int` | `768` | Viewport width below which the dock collapses. |
 | `MobileBehavior` | `MobileBehavior` | `Stacked` | `Stacked`, `Drawer`, or `Hidden` below the mobile breakpoint. |
 | `StaticAssetsBasePath` | `string?` | `null` | Override the `/_content/BlueprintShell` prefix used by the shell's CSS imports. |
-| `ScanAssemblies` | `IList<Assembly>` | _all loaded_ | Explicit assemblies to scan for `[EditorShell]`, `[EditorPanel]`, `[ReaderPage]`. Empty (default) scans the whole AppDomain. |
+| `ScanAssemblies` | `IList<Assembly>` | _all loaded_ | Explicit assemblies to scan for `[Shell]`, `[Panel]`, `[ReaderPage]`. Empty (default) scans the whole AppDomain. |
 | `EnableDiagnostics` | `bool` | `false` | Expose `GET /_shell/diagnostics` (recommended only in Development). |
 | `SignalRHubPath` | `string` | `"/shell-hub"` | Customise to avoid collisions with other SignalR endpoints. |
 | `ActiveTheme` | `string?` | `null` | Name of the initial theme preset (see [Theme presets](#theme-presets)). |
 
-### Per-request chrome (anonymous reader vs. logged-in editor)
+### Per-request chrome (anonymous reader vs. authenticated contributor)
 
 ```csharp
 builder.Services.AddBlueprintShell(o =>
@@ -122,11 +122,11 @@ builder.Services.AddBlueprintShell(o =>
 
 ## Writing panels
 
-Decorate any Blazor component with `[EditorPanel]` to register it as a dockable panel. The attribute is discovered at startup by `StaticShellLoader` via reflection.
+Decorate any Blazor component with `[Panel]` to register it as a dockable panel. The attribute is discovered at startup by `StaticShellLoader` via reflection.
 
 ```razor
 @* MyPanel.razor *@
-@attribute [EditorPanel("my-panel", "My Panel", DockZone.Right,
+@attribute [Panel("my-panel", "My Panel", DockZone.Right,
     Icon    = "settings",
     Route   = "/my-panel",
     Visible = true)]
@@ -154,13 +154,13 @@ Decorate any Blazor component with `[EditorPanel]` to register it as a dockable 
 
 ## Writing shell builders
 
-For code-driven layout (no Razor), implement `IEditorShellBuilder` and decorate with `[EditorShell]`:
+For code-driven layout (no Razor), implement `IShellContribution` and decorate with `[Shell]`:
 
 ```csharp
 using BlueprintShell.Shell;
 
-[EditorShell]
-public class MyShell : IEditorShellBuilder
+[Shell]
+public class MyShell : IShellContribution
 {
     public int Order => 0;   // lower runs first
 
@@ -184,7 +184,7 @@ Multiple builders coexist: `Order` controls execution order; higher-precedence s
 
 ## Reader pages
 
-Reader pages are routed components that bypass the dock layout - useful for full-bleed content (articles, marketing pages) hosted alongside an editor.
+Reader pages are routed components that bypass the dock layout - useful for full-bleed content (articles, marketing pages) hosted alongside an authenticated contributor mode.
 
 ```razor
 @* Article.razor *@
@@ -209,7 +209,7 @@ If you already have a catalog of `@page`-routed components and don't want to mig
 
 ## Auth-aware chrome
 
-Implement `IShellAuthContext` and the shell will filter `[EditorPanel(..., RequiresRole = "...")]` panels and `[ReaderPage(..., RequiresRole = "...")]` pages automatically. Use `"*"` to require any authenticated user.
+Implement `IShellAuthContext` and the shell will filter `[Panel(..., RequiresRole = "...")]` panels and `[ReaderPage(..., RequiresRole = "...")]` pages automatically. Use `"*"` to require any authenticated user.
 
 ```csharp
 public sealed class MyAuthContext : IShellAuthContext
@@ -313,7 +313,7 @@ registry.RegisterSource("dynamic", new ShellSource
     Precedence      = 100,
 });
 
-var shell = await EditorServerHost.StartAsync(registry: registry);
+var shell = await ShellServerHost.StartAsync(registry: registry);
 ```
 
 ## Dialogs / popovers (`BbPortalHost`)
@@ -352,7 +352,7 @@ If you don't see the file in Solution Explorer, your `<PackageReference>` may be
 Blazor's `Router` resolves `@page` routes first; the shell's catch-all `Pages/Index.razor` only runs when no `@page` matches. So on a collision, the consumer's `@page` component wins and the `[ReaderPage]` entry is silently shadowed. Use `[ReaderPage(UseBlazorRouter = true)]` when you want both - the registry still records the page (for diagnostics + role tracking) but defers rendering to your `@page` component.
 
 **Does the shell install `MapStaticAssets` globally?**
-Only in standalone mode (`EditorServerHost.StartAsync` calls `app.MapStaticAssets()` because it owns the whole web app). In embedded mode, `MapBlueprintShell` only maps the SignalR hub and the optional diagnostics endpoint. The shell's CSS / fonts / icons are served via the consumer's own static-files pipeline at the standard `/_content/BlueprintShell/...` prefix (rewriteable via `BlueprintShellOptions.StaticAssetsBasePath`).
+Only in standalone mode (`ShellServerHost.StartAsync` calls `app.MapStaticAssets()` because it owns the whole web app). In embedded mode, `MapBlueprintShell` only maps the SignalR hub and the optional diagnostics endpoint. The shell's CSS / fonts / icons are served via the consumer's own static-files pipeline at the standard `/_content/BlueprintShell/...` prefix (rewriteable via `BlueprintShellOptions.StaticAssetsBasePath`).
 
 **Is the SignalR hub authenticated?**
 The shell maps the hub via plain `app.MapHub<ShellHub>(...)` with no `.RequireAuthorization()`. The host's auth pipeline applies whatever middleware it has in place. If you need auth-gated hub access in embedded mode, wrap the path in your own `app.MapGroup(o.SignalRHubPath).RequireAuthorization()` (or change `o.SignalRHubPath` and map the hub yourself).
@@ -365,7 +365,7 @@ BlueprintShell/
 ├── BlueprintShellOptions.cs        # Host-level options (chrome, mobile, scan, diagnostics)
 ├── BlueprintShellPwaOptions.cs     # PWA manifest + service-worker options
 ├── BlueprintShellExtensions.cs     # AddBlueprintShell, MapBlueprintShell, MapBlueprintShellPwa
-├── Program.cs                      # EditorServerHost - standalone Kestrel runner
+├── Program.cs                      # ShellServerHost - standalone Kestrel runner
 ├── App.razor                       # Root HTML document (theme, BB CSS, scripts)
 ├── Routes.razor                    # Router; selects layout per reader-page
 ├── _Imports.razor                  # In-project usings
@@ -385,7 +385,7 @@ BlueprintShell/
 │   ├── DockPanelGroup.razor        # Tab-group container
 │   └── ElementRenderer.razor       # Maps Element tree to BlazorBlueprint components
 ├── Shell/
-│   ├── Attributes.cs               # [EditorShell], [EditorPanel], [ReaderPage]
+│   ├── Attributes.cs               # [Shell], [Panel], [ReaderPage]
 │   ├── Descriptors.cs              # Panel, ReaderPage, Theme, Menubar descriptors
 │   ├── Elements.cs                 # Element + IContentBuilder API
 │   ├── ShellRegistry.cs            # Merge of sources, themes, header slots

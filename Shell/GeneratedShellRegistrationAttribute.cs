@@ -1,12 +1,12 @@
 namespace BlueprintShell.Shell;
 
 /// <summary>
-/// Marks a static method that registers compiled-in editor shells with a
+/// Marks a static method that registers compiled-in shells with a
 /// <see cref="ShellRegistry"/>. Discovered at runtime by
 /// <see cref="StaticShellLoader"/> via reflection across all loaded assemblies.
 /// </summary>
 /// <remarks>
-/// Emitted by the <c>EditorShellGenerator</c> source generator on a static
+/// Emitted by the <c>ShellGenerator</c> source generator on a static
 /// helper class produced inside each consuming assembly. Mirrors the pattern
 /// used by <c>GeneratedBehaviorRegistrationAttribute</c> for ECS behaviors.
 /// The marked method must be <see langword="static"/> and take a single

@@ -3,7 +3,7 @@ using System.Reflection;
 namespace BlueprintShell.Shell;
 
 /// <summary>
-/// Discovers compile-time-registered editor shells, panels, and reader pages by reflecting
+/// Discovers compile-time-registered shells, panels, and reader pages by reflecting
 /// across loaded assemblies (or an explicit list supplied via <see cref="BlueprintShellOptions.ScanAssemblies"/>),
 /// and feeds them into the <see cref="ShellRegistry"/>.
 /// </summary>
@@ -12,7 +12,7 @@ namespace BlueprintShell.Shell;
 /// <list type="number">
 ///   <item><description>Static methods marked with <see cref="GeneratedShellRegistrationAttribute"/> are invoked
 ///         (these are emitted by the source generator).</description></item>
-///   <item><description>Types marked with <see cref="EditorPanelAttribute"/> / <see cref="ReaderPageAttribute"/>
+///   <item><description>Types marked with <see cref="PanelAttribute"/> / <see cref="ReaderPageAttribute"/>
 ///         are collected into a single <see cref="ShellSourceIds.Static"/> source.</description></item>
 /// </list>
 /// </remarks>
@@ -87,10 +87,10 @@ public static class StaticShellLoader
         return invoked;
     }
 
-    private static (List<(EditorPanelAttribute, Type)> panels, List<(ReaderPageAttribute, Type)> readers)
+    private static (List<(PanelAttribute, Type)> panels, List<(ReaderPageAttribute, Type)> readers)
         CollectAttributedComponents(IEnumerable<Assembly> assemblies)
     {
-        var panels = new List<(EditorPanelAttribute, Type)>();
+        var panels = new List<(PanelAttribute, Type)>();
         var readers = new List<(ReaderPageAttribute, Type)>();
 
         foreach (var asm in assemblies)
@@ -98,8 +98,8 @@ public static class StaticShellLoader
             if (asm.IsDynamic) continue;
             foreach (var t in SafeGetTypes(asm))
             {
-                foreach (var attr in t.GetCustomAttributes(typeof(EditorPanelAttribute), inherit: false))
-                    panels.Add(((EditorPanelAttribute)attr, t));
+                foreach (var attr in t.GetCustomAttributes(typeof(PanelAttribute), inherit: false))
+                    panels.Add(((PanelAttribute)attr, t));
 
                 foreach (var attr in t.GetCustomAttributes(typeof(ReaderPageAttribute), inherit: false))
                     readers.Add(((ReaderPageAttribute)attr, t));

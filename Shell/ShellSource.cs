@@ -1,7 +1,7 @@
 namespace BlueprintShell.Shell;
 
 /// <summary>
-/// A single contribution of editor shell content to the <see cref="ShellRegistry"/>,
+/// A single contribution of shell content to the <see cref="ShellRegistry"/>,
 /// keyed in the registry by an opaque source id (see <see cref="ShellSourceIds"/>).
 /// </summary>
 /// <remarks>
@@ -18,18 +18,18 @@ namespace BlueprintShell.Shell;
 /// <seealso cref="ShellRegistry"/>
 public sealed class ShellSource
 {
-    /// <summary>Discovered <c>[EditorShell]</c> builders, sorted later by <see cref="IEditorShellBuilder.Order"/>.</summary>
-    public IReadOnlyList<IEditorShellBuilder> Builders { get; init; } = Array.Empty<IEditorShellBuilder>();
+    /// <summary>Discovered <c>[Shell]</c> builders, sorted later by <see cref="IShellContribution.Order"/>.</summary>
+    public IReadOnlyList<IShellContribution> Builders { get; init; } = Array.Empty<IShellContribution>();
 
-    /// <summary>Discovered <c>[EditorPanel]</c> Blazor component types with their attribute metadata.</summary>
-    public IReadOnlyList<(EditorPanelAttribute Attr, Type Type)> PanelComponents { get; init; }
-        = Array.Empty<(EditorPanelAttribute, Type)>();
+    /// <summary>Discovered <c>[Panel]</c> Blazor component types with their attribute metadata.</summary>
+    public IReadOnlyList<(PanelAttribute Attr, Type Type)> PanelComponents { get; init; }
+        = Array.Empty<(PanelAttribute, Type)>();
 
     /// <summary>Discovered <c>[ReaderPage]</c> Blazor component types with their attribute metadata.</summary>
     public IReadOnlyList<(ReaderPageAttribute Attr, Type Type)> ReaderPages { get; init; }
         = Array.Empty<(ReaderPageAttribute, Type)>();
 
-    /// <summary>Raw CSS snippets to inject into the editor page.</summary>
+    /// <summary>Raw CSS snippets to inject into the shell page.</summary>
     public IReadOnlyList<string> CustomCss { get; init; } = Array.Empty<string>();
 
     /// <summary>Theme presets contributed by this source. Merged into <see cref="ShellDescriptor.Themes"/>.</summary>

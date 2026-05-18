@@ -832,7 +832,7 @@
             }
             break;
 
-        // -- Editor: Tree Item --
+        // -- Domain: Tree Item --
         case "tree-item":
             {
                 var ic = PropIcon(el, "icon");
@@ -867,7 +867,7 @@
             }
             break;
 
-        // -- Editor: Field Row --
+        // -- Domain: Field Row --
         case "field-row":
             <div class="flex items-center gap-2 h-6 text-[11px]">
                 <span class="w-28 shrink-0 text-muted-foreground truncate text-right pr-2">@el.Text</span>
@@ -877,7 +877,7 @@
             </div>
             break;
 
-        // -- Editor: Empty State --
+        // -- Domain: Empty State --
         case "empty-state":
             {
                 var ic = PropIcon(el, "icon");
@@ -891,7 +891,7 @@
             }
             break;
 
-        // -- Editor: Log Entry --
+        // -- Domain: Log Entry --
         case "log-entry":
             {
                 var level = PropStr(el, "level") ?? "INFO";
@@ -1007,7 +1007,7 @@
 }
 
 @code {
-    [Parameter, EditorRequired] public List<Element> Elements { get; set; } = [];
+    [Parameter] public List<Element> Elements { get; set; } = [];
     [Inject] private IJSRuntime JS { get; set; } = null!;
 
     private static bool _isDarkMode = true; // default dark

@@ -1,13 +1,13 @@
 namespace BlueprintShell.Shell;
 
 /// <summary>
-/// Entry point for editor shell scripts. Classes marked with <see cref="EditorShellAttribute"/>
+/// Entry point for code-driven shell contributions. Classes marked with <see cref="ShellAttribute"/>
 /// implementing this interface are discovered at runtime and their <see cref="Build"/> method
 /// is called to populate the <see cref="ShellDescriptor"/>.
 /// </summary>
 /// <example><code>
-/// [EditorShell]
-/// public class MyShell : IEditorShellBuilder
+/// [Shell]
+/// public class MyShell : IShellContribution
 /// {
 ///     public int Order => 10;
 ///     public void Build(IShellBuilder shell)
@@ -18,21 +18,21 @@ namespace BlueprintShell.Shell;
 ///     }
 /// }
 /// </code></example>
-/// <seealso cref="EditorShellAttribute"/>
+/// <seealso cref="ShellAttribute"/>
 /// <seealso cref="IShellBuilder"/>
 /// <seealso cref="ShellDescriptor"/>
-public interface IEditorShellBuilder
+public interface IShellContribution
 {
-    /// <summary>Priority for ordering multiple shell builders. Lower values run first.</summary>
+    /// <summary>Priority for ordering multiple shell contributions. Lower values run first.</summary>
     int Order => 0;
 
-    /// <summary>Declaratively builds the editor shell layout.</summary>
+    /// <summary>Declaratively builds the shell layout.</summary>
     /// <param name="shell">The top-level shell builder providing panel and metadata registration.</param>
     void Build(IShellBuilder shell);
 }
 
 /// <summary>Top-level shell builder. Provides access to panels and metadata.</summary>
-/// <seealso cref="IEditorShellBuilder"/>
+/// <seealso cref="IShellContribution"/>
 /// <seealso cref="ShellDescriptor"/>
 /// <seealso cref="IPanelBuilder"/>
 public interface IShellBuilder

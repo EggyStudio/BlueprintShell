@@ -85,7 +85,7 @@
 </div>
 
 @code {
-    [Parameter, EditorRequired] public List<PanelDescriptor> Panels { get; set; } = [];
+    [Parameter] public List<PanelDescriptor> Panels { get; set; } = [];
 
     private static string SizeOf(List<PanelDescriptor> panels)
     {

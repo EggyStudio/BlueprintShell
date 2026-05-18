@@ -75,7 +75,7 @@ public sealed class Element
 /// <summary>Fluent builder for composing UI element trees. No Blazor dependency.</summary>
 /// <remarks>
 /// <para>
-/// The content builder provides a strongly-typed, discoverable API for editor scripts to define
+/// The content builder provides a strongly-typed, discoverable API for shell contributions to define
 /// UI without any Blazor dependency. Each method appends one or more <see cref="Element"/> nodes
 /// to an internal list, which is later rendered by the Blazor-side <c>ElementRenderer</c>.
 /// </para>
@@ -528,7 +528,7 @@ public interface IContentBuilder
     /// <returns>This builder for fluent chaining.</returns>
     IContentBuilder NavigationMenu(string? css, Action<INavigationMenuBuilder> configure);
 
-    // -- Editor-specific --
+    // -- Domain-specific --
 
     /// <summary>Adds a hierarchical tree item (used in scene tree / asset browser).</summary>
     /// <param name="label">Display text for the tree item.</param>

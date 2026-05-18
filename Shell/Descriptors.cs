@@ -4,7 +4,7 @@ namespace BlueprintShell.Shell;
 
 /// <summary>Hint for the default dock zone of a panel.</summary>
 /// <remarks>
-/// The dock zone determines the initial placement of a panel in the editor layout.
+/// The dock zone determines the initial placement of a panel in the shell layout.
 /// The Blazor-side dock layout component reads this value to position panels at startup.
 /// Panels can be moved by the user at runtime via drag-and-drop.
 /// </remarks>
@@ -23,7 +23,7 @@ public enum DockZone
     /// <summary>Docked to the bottom edge (e.g. console, log output).</summary>
     Bottom,
 
-    /// <summary>Center workspace area (e.g. viewport, main editor canvas).</summary>
+    /// <summary>Center workspace area (e.g. viewport, main canvas).</summary>
     Center,
 
     /// <summary>Floating window, not docked to any edge.</summary>
@@ -33,13 +33,13 @@ public enum DockZone
 // -- Root Descriptor --
 
 /// <summary>
-/// Complete description of the editor shell UI.
-/// Produced by <see cref="IEditorShellBuilder"/> and consumed by the Blazor renderer.
+/// Complete description of the shell UI.
+/// Produced by <see cref="IShellContribution"/> and consumed by the Blazor renderer.
 /// </summary>
 /// <remarks>
 /// <para>
-/// The shell descriptor is a Blazor-independent POCO tree that fully describes the editor layout.
-/// It is built on the C# scripting side by <see cref="IEditorShellBuilder"/> implementations and
+/// The shell descriptor is a Blazor-independent POCO tree that fully describes the shell layout.
+/// It is built on the C# scripting side by <see cref="IShellContribution"/> implementations and
 /// pushed into the <see cref="ShellRegistry"/> where the Blazor renderer reads it.
 /// </para>
 /// <para>
@@ -48,7 +48,7 @@ public enum DockZone
 /// </para>
 /// </remarks>
 /// <seealso cref="ShellRegistry"/>
-/// <seealso cref="IEditorShellBuilder"/>
+/// <seealso cref="IShellContribution"/>
 /// <seealso cref="PanelDescriptor"/>
 public sealed class ShellDescriptor
 {
@@ -128,11 +128,11 @@ public sealed class ThemePreset
 // -- Panels (Dockable) --
 
 /// <summary>
-/// Describes a dockable panel in the editor layout.
+/// Describes a dockable panel in the shell layout.
 /// </summary>
 /// <remarks>
 /// <para>
-/// Panels are the primary building blocks of the editor UI. Each panel occupies a dock zone
+/// Panels are the primary building blocks of the shell UI. Each panel occupies a dock zone
 /// and renders either a widget (by key) or an <see cref="Element"/> tree built from the
 /// content builder API. The <see cref="Content"/> property takes priority over <see cref="WidgetKey"/>.
 /// </para>
@@ -173,7 +173,7 @@ public sealed class PanelDescriptor
     /// <summary>
     /// When set, the panel renders a native Blazor component via <c>DynamicComponent</c>.
     /// Takes priority over both <see cref="Content"/> and <see cref="WidgetKey"/>.
-    /// Populated automatically for <c>.razor</c> files annotated with <see cref="EditorPanelAttribute"/>.
+    /// Populated automatically for <c>.razor</c> files annotated with <see cref="PanelAttribute"/>.
     /// </summary>
     public Type? ComponentType { get; set; }
 

@@ -411,7 +411,7 @@ public sealed class ContentBuilder : IContentBuilder
         return this;
     }
 
-    // -- Editor-specific --
+    // -- Domain-specific --
 
     /// <inheritdoc />
     public IContentBuilder Menubar(string? css, Action<IMenubarBuilder> configure)

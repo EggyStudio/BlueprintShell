@@ -7,7 +7,7 @@ namespace BlueprintShell.Shell;
 /// </summary>
 /// <remarks>
 /// The shell does not impose any auth scheme - it only reads <see cref="IsAuthenticated"/>
-/// and <see cref="Roles"/>. Reader-pages and editor panels marked with a <c>RequiresRole</c>
+/// and <see cref="Roles"/>. Reader-pages and panels marked with a <c>RequiresRole</c>
 /// are filtered out for requests where the role is not present.
 /// </remarks>
 public interface IShellAuthContext
